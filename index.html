@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Manager</title>
+  <link rel="stylesheet" href="style.css" id="theme-link">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-left">
+        <!-- Logo -->
+        <img src="./images/logo.png" alt="Logo" class="logo">
+        <!-- App Name -->
+        <span class="app-name">The Vault</span>
+    </div>
+    <div class="navbar-center">
+        <!-- Search Bar -->
+         <select id="searchByWhat">
+          <option value="serviceIDX">Service</option>
+          <option value="emailIDX">Email</option>
+          <option value="usernameIDX">Username</option>
+          <option value="passwordIDX">Password</option>
+         </select>
+         <input type="text" id="search-bar" class="search-bar" placeholder="Search...">
+    </div>
+    <div class="navbar-right">
+        <!-- Dropdown Menu -->
+        <div class="dropdown">
+          <i class="settings-icon fas fa-cogs"></i>
+          <div class="dropdown-menu">
+            Light Mode
+            <!-- Toggle switch -->
+            <label class="toggle-theme">
+              <input type="checkbox" id="toggle-theme"/>
+              <span class="slider"></span>
+            </label>
+            <br>
+            Show
+              <!-- Toggle Switch for Passwords -->
+            <label class="toggle-visibility">
+              <input type="checkbox" id="toggle-visibility"/>
+              <span class="slider"></span>
+            </label>
+            <button id="self-destruct" class="self-destruct-button">Self-Destruct</button>
+          </div>
+        </div>
+    </div>
+  </nav>
+
+  <!-- Creating a new password/item combo form -->
+  <form id="passwordForm">
+    <h3 id="passwordFormHeader">New Entry:</h3>
+    <label for="service">Service:</label>
+    <input maxlength="30" type="text" id="service" required />
+    <label for="email">Email:</label>
+    <input maxlength="30" type="text" id="email" required />
+    <label for="username">Username:</label>
+    <input maxlength="30" type="text" id="username" required />
+    <label for="password">
+      Password:
+      <button id="toggle-password" type="button" class="fas fa-eye" style="width:10%;height:10%; background-color: rgba(0, 0, 0, 0); float:right; padding-top: 5px;"></button>
+    </label>
+    <input maxlength="30" type="password" id="password" required />
+    <button type="submit">Save</button>
+  </form>
+
+  <!-- Saved Password list -->
+  <h2 id="passwordListHeader">Saved Passwords</h2>
+  <div id="passwordList">
+    <!-- Saved passwords will be displayed here --> 
+    <script src="renderer.js"></script>
+  </div>
+
+</body>
+</html>

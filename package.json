@@ -1,0 +1,17 @@
+{
+  "name": "mypasswordmanager",
+  "version": "1.0.0",
+  "description": "Password Manager using electron",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "Tai Meade",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^33.2.0"
+  },
+  "dependencies": {
+    "electron-clear-data": "^1.0.5"
+  }
+}

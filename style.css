@@ -1,0 +1,426 @@
+/* General styling */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #1e1e1e; /* Dark background */
+    color: #e0e0e0; /* Light text for contrast */
+}
+
+/* Tile container for password items */
+.password-item {
+    background-color: #2c2c2c; /* Dark gray background for tiles */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); /* Darker shadow */
+    padding: 15px;
+    width: 280px;
+    box-sizing: border-box;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-left: 5px solid #4caf50; /* Green accent border */
+}
+
+/* Tile hover effect */
+.password-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6);
+}
+
+/* Text styling */
+.password-item p {
+    margin: 8px 0;
+    font-size: 14px;
+    font-family: 'Courier New', Courier, monospace; 
+    /* Use "  'Courier New', Courier, monospace  " instead...more code-like in my opinion.....other option is "  "Lucida Console", "Courier New", monospace  " */ 
+    color: #b0b0b0; /* Black text */
+}
+
+.password-item-password {
+    margin: 8px 0;
+    font-size: 14px;
+    font-family: 'Courier New', Courier, monospace; 
+    /* Use "  'Courier New', Courier, monospace  " instead...more code-like in my opinion.....other option is "  "Lucida Console", "Courier New", monospace  " */ 
+    color: #b0b0b0; /* Lighter gray text */
+}
+
+/* Highlight strong labels */
+.password-item p strong {
+    color: #4caf50; /* Green for emphasis */
+    font-weight: bold;
+}
+
+/* Container for password items */
+#passwordList {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping to a new row when no space is left */
+    gap: 20px; /* Spacing between items */
+    width: 100%;
+    justify-content: flex-start; /* Align items to the left */
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    body {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .password-item {
+        width: 100%;
+    }
+}
+
+/* Style the form container */
+#passwordForm {
+    background-color: #2c2c2c; /* Dark gray background for the form */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); /* Darker shadow */
+    width: 100%;
+    max-width: 400px;
+    margin: auto;
+    margin-top: 20px;
+}
+
+/* Label styling */
+#passwordForm label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #e0e0e0; /* Light text */
+}
+#passwordFormHeader {
+    margin-bottom: 15px;
+    margin-top: 0px;
+}
+
+/* Input field styling */
+#passwordForm input[type="text"],
+#passwordForm input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #4caf50; /* Green border */
+    background-color: #1e1e1e; /* Dark input background */
+    color: #e0e0e0; /* Light text */
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+/* Input hover and focus effects */
+#passwordForm input[type="text"]:focus,
+#passwordForm input[type="password"]:focus {
+    border-color: #81c784; /* Lighter green for focus */
+    outline: none;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); /* Green glow */
+}
+
+/* Button styling */
+#passwordForm button {
+    width: 100%;
+    padding: 10px;
+    background-color: #4caf50; /* Green button background */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+/* Button hover effect */
+#passwordForm button:hover {
+    background-color: #388e3c; /* Darker green on hover */
+}
+
+/* Password logo sizing */
+/* .password-logo {
+    
+} */
+
+/* Navbar styling */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: #2c2c2c; /* Dark gray background for navbar */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); /* Darker shadow */
+    border-radius: 8px;
+}
+
+.navbar-left, .navbar-center, .navbar-right {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-left {
+    gap: 15px;
+}
+
+.navbar-center {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.navbar-right {
+    gap: 15px;
+}
+
+/* Logo styling */
+.logo {
+    height: 50px;
+    width: auto;
+}
+
+/* App name styling */
+.app-name {
+    font-size: 24px;
+    font-weight: bold;
+    color: #4caf50; /* Green for the app name */
+}
+
+/* Search bar styling */
+.search-bar {
+    width: 100%;
+    max-width: 400px;
+    padding: 10px;
+    background-color: #1e1e1e;
+    border: 1px solid #4caf50; /* Green border */
+    color: #e0e0e0; /* Light text color */
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+    margin-right: 150px;
+}
+
+/* Search bar focus effect */
+.search-bar:focus {
+    border-color: #81c784; /* Lighter green on focus */
+    outline: none;
+}
+
+/* Settings icon styling */
+.settings-icon {
+    font-size: 24px;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+/* Settings icon hover effect */
+.settings-icon:hover {
+    color: #4caf50; /* Green hover effect */
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .navbar-center {
+        width: 100%;
+    }
+
+    .search-bar {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .navbar-left, .navbar-right {
+        justify-content: flex-start;
+        width: 100%;
+    }
+}
+
+/* Dropdown Menu things */
+.dropdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 40px;
+    background-color: #2c2c2c;
+    color: #e0e0e0;
+    min-width: 150px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    z-index: 1;
+    overflow: hidden;
+    padding: 8px;
+    padding-top: 12px;
+  }
+
+  .dropdown-menu button {
+    background: none;
+    border: none;
+    color: #e0e0e0;
+    padding: 10px 15px;
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .dropdown-menu button:hover {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+  }
+
+  /* Show dropdown menu */
+  .dropdown.active .dropdown-menu {
+    display: block;
+  }
+
+  /* Light theme adjustments */
+  .light-mode .dropdown-menu {
+    background-color: #1e1e1e;
+  }
+  
+  .light-mode .dropdown-menu button:hover {
+    background-color: #1e1e1e;
+  }
+
+  .toggle-theme {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+    margin-right: 15px;
+  }
+
+/* Hide default checkbox */
+.toggle-theme input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  /* The track */
+  .slider {
+    margin-left: 10px;
+    position: absolute;
+    cursor: pointer;
+    background-color: #ccc;
+    border-radius: 24px;
+    width: 100%;
+    height: 100%;
+    transition: background-color 0.3s;
+  }
+
+  /* The circular slider */
+  .slider::before {
+    content: "";
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 2px;
+    background-color: #1e1e1e;
+    border-radius: 50%;
+    transition: transform 0.3s;
+  }
+
+  /* Toggled state */
+  .toggle-theme input:checked+.slider {
+    background-color: #4caf50;
+  }
+
+  .toggle-theme input:checked+.slider::before {
+    transform: translateX(22px);
+  }
+
+  .toggle-visibility {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+    margin-top: 8px;
+    margin-left: 40px;
+  }
+
+  /* Hide default checkbox */
+  .toggle-visibility input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  /* Toggled state */
+  .toggle-visibility input:checked+.slider {
+    background-color: #4caf50;
+  }
+
+  .toggle-visibility input:checked+.slider::before {
+    transform: translateX(22px);
+  }
+
+  #searchByWhat {
+    background-color: #2c2c2c; /* Matches navbar background */
+    color: #e0e0e0; /* Light text color */
+    border: 1px solid #4caf50; /* Green border for contrast */
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 14px;
+    margin-right: 20px; /* Space between search bar and select */
+    cursor: pointer;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  /* Hover effect for the select element */
+  #searchByWhat:hover {
+    border-color: #81c784; /* Lighter green on hover */
+  }
+
+  /* Focus effect for the select element */
+  #searchByWhat:focus {
+    outline: none;
+    box-shadow: 0 0 5px rgba(129, 199, 132, 0.5); /* Subtle green glow */
+  }
+
+  /* Option styling */
+  #searchByWhat option {
+    background-color: #2c2c2c; /* Matches the select background */
+    color: #e0e0e0;
+  }
+
+  /* Option hover styling */
+  #searchByWhat option:hover {
+    background-color: #81c784; /* Matches the select background */
+  }
+
+  /* Self-Destruct Button Styling */
+  #self-destruct {
+    background-color: #d32f2f; /* Red background for danger */
+    text-align: center;
+    color: #ffffff; /* White text for contrast */
+    border: none;
+    padding: 10px 32px;
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 4px;
+    margin-top: 10px; /* Space from other buttons */
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+
+  /* Hover effect for Self-Destruct Button */
+.self-destruct-button:hover {
+  background-color: #b71c1c; /* Darker red on hover */
+  transform: scale(1.05); /* Slight zoom effect */
+}
+
+/* Active/Pressed effect for Self-Destruct Button */
+.self-destruct-button:active {
+  background-color: #9a0007; /* Even darker red on click */
+  transform: scale(0.95); /* Slight shrink effect */
+}
