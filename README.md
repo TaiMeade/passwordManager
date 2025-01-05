@@ -50,13 +50,13 @@ Unlike cloud-based password managers, The Vault keeps your data offline, ensurin
 ## Usage
 
 1. Launch the app.
-2. Create a master password (required for accessing your saved passwords).
+2. Create a master password (required for accessing your saved passwords). (to be added)
 3. Add, view, or manage your passwords within the app.
 
 ## Security Measures
 
-<!-- - **Master Password**: Protects access to the app. -->
-<!-- - **Encryption**: All passwords are encrypted using AES-256 encryption. -->
+- **Master Password**: Protects access to the app. (to be added)
+- **Encryption**: All passwords are encrypted using AES-256 encryption. (to be added)
 - **No Cloud Sync**: Prevents unauthorized access via online platforms.
 
 ## Contributing
@@ -83,10 +83,6 @@ We welcome contributions to improve the app! To contribute:
    ```
 
 5. Open a pull request on GitHub.
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
 
 ---
 
