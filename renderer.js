@@ -25,10 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   
     // Get input values
-    const service = document.getElementById('service').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
+    const service = await window.electronAPI.encrypt(document.getElementById('service').value.trim());
+    const email = await window.electronAPI.encrypt(document.getElementById('email').value.trim());
+    const username = await window.electronAPI.encrypt(document.getElementById('username').value.trim());
+    const password = await window.electronAPI.encrypt(document.getElementById('password').value.trim());
   
     if (!service || !email || !username || !password) {
       alert('Please fill in all fields.');
@@ -98,92 +98,54 @@ document.addEventListener('DOMContentLoaded', () => {
     // Refocus on the first input for convenience
   }
   
-  function displaySavedPasswords() {
+  async function displaySavedPasswords() {
     const dbRequest = indexedDB.open('PasswordManager', currentVersion);
-  
-    dbRequest.onupgradeneeded = (event) => {
-      const db = event.target.result;
-      console.log("upgrade needed");
-      if (db.objectStoreNames.contains('passwords')) {
-        console.log("database about to be deleted");
-        db.deleteObjectStore('passwords');
 
-        console.log("database about to be created");
-        objectStore = db.createObjectStore('passwords', { autoIncrement: true, });
-
-        console.log('index about to be created');
-        objectStore.createIndex('serviceIDX', 'service', {unique: false});
-        objectStore.createIndex('emailIDX', 'email', {unique: false});
-        objectStore.createIndex('usernameIDX', 'username', {unique: false});
-        objectStore.createIndex('passwordIDX', 'password', {unique: false});
-        objectStore.createIndex('allFieldsIDX', ['service', 'email', 'username', 'password'], {unique: true});
-        console.log("Indexes should be created");
-      }
-    }
-
-    dbRequest.onsuccess = (event) => {
-      const db = event.target.result;
-      const transaction = db.transaction('passwords', 'readonly');
-      const store = transaction.objectStore('passwords');
-      const getAllRequest = store.getAll();
-
-      // let keyList = store.getAllKeys().result;
-
-      getAllRequest.onsuccess = () => {
-        const passwords = getAllRequest.result;
-        
+    dbRequest.onsuccess = async (event) => {
+        const db = event.target.result;
+        const transaction = db.transaction('passwords', 'readonly');
+        const store = transaction.objectStore('passwords');
+        const getAllRequest = store.getAll();
         const keyListRequest = store.getAllKeys();
-        // keyListRequest.onsuccess = () => {
-        //   const keyList = keyListRequest.result; // list of current keys in database in order
-        //   console.log(keyList);
-        // }
 
-        // MAYBE USE A CURSOR TO GET PRIMARY KEY
-  
-        const passwordList = document.getElementById('passwordList');
-        passwordList.innerHTML = ''; // Clear previous list
+        getAllRequest.onsuccess = async () => {
+            const passwords = getAllRequest.result;
+            const keyList = await new Promise((resolve) => {
+                keyListRequest.onsuccess = () => resolve(keyListRequest.result);
+            });
 
-        keyListRequest.onsuccess = () => {
-          const keyList = keyListRequest.result; // list of current keys in database in order
-          // console.log("Key List: ", keyList);
+            passwordList.innerHTML = ''; // Clear previous list
 
-          passwords.forEach((entry, key) => {
-            const { service, email, username, password } = entry;
+            for (let key = 0; key < passwords.length; key++) {
+                const { service, email, username, password } = passwords[key];
 
-            const listItem = document.createElement('div');
-            listItem.classList.add('password-item');
-            listItem.innerHTML = `
-              <p><strong>Service:</strong> ${service}</p>
-              <p><strong>Email:</strong> ${email}</p>
-              <p><strong>Username:</strong> ${username}</p>
-              <p class="password-item-password" style="display:none;"><strong>Password:</strong> ${password}</p>
-              <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
-            `;
-            passwordList.appendChild(listItem);
-          });
-          
-          // Attach all delete button listeners
-          document.querySelectorAll('.delete-btn').forEach((button) => {
-          button.addEventListener('click', (e) => {
-            const key = parseInt(e.target.getAttribute('data-id'), 10);
-            removePassword(key);
-          })
-          })
+                const decryptedService = await window.electronAPI.decrypt(service);
+                const decryptedEmail = await window.electronAPI.decrypt(email);
+                const decryptedUsername = await window.electronAPI.decrypt(username);
+                const decryptedPassword = await window.electronAPI.decrypt(password);
+
+                const listItem = document.createElement('div');
+                listItem.classList.add('password-item');
+                listItem.innerHTML = `
+                    <p><strong>Service:</strong> ${decryptedService}</p>
+                    <p><strong>Email:</strong> ${decryptedEmail}</p>
+                    <p><strong>Username:</strong> ${decryptedUsername}</p>
+                    <p class="password-item-password" style="display:none;"><strong>Password:</strong> ${decryptedPassword}</p>
+                    <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
+                `;
+                passwordList.appendChild(listItem);
+            }
+
+            // Attach delete button event listeners AFTER DOM is updated
+            document.querySelectorAll('.delete-btn').forEach((button) => {
+                button.addEventListener('click', (e) => {
+                    const key = parseInt(e.target.getAttribute('data-id'), 10);
+                    removePassword(key);
+                });
+            });
         };
-        
-      };
-
-      
-  
-      getAllRequest.onerror = (err) => {
-        console.error('Error retrieving passwords:', err);
-      };
     };
-  
-    dbRequest.onerror = (err) => {
-      console.error('Database error:', err);
-    };
-  }
+}
   
   // Dropdown menu script
   // Toggle Dropdown
