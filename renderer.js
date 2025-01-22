@@ -25,9 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   
     // Get input values
-    const service = await window.electronAPI.encrypt(document.getElementById('service').value.trim());
-    const email = await window.electronAPI.encrypt(document.getElementById('email').value.trim());
-    const username = await window.electronAPI.encrypt(document.getElementById('username').value.trim());
+    const service = document.getElementById('service').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const username = document.getElementById('username').value.trim();
     const password = await window.electronAPI.encrypt(document.getElementById('password').value.trim());
   
     if (!service || !email || !username || !password) {
@@ -119,17 +119,14 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let key = 0; key < passwords.length; key++) {
                 const { service, email, username, password } = passwords[key];
 
-                const decryptedService = await window.electronAPI.decrypt(service);
-                const decryptedEmail = await window.electronAPI.decrypt(email);
-                const decryptedUsername = await window.electronAPI.decrypt(username);
                 const decryptedPassword = await window.electronAPI.decrypt(password);
 
                 const listItem = document.createElement('div');
                 listItem.classList.add('password-item');
                 listItem.innerHTML = `
-                    <p><strong>Service:</strong> ${decryptedService}</p>
-                    <p><strong>Email:</strong> ${decryptedEmail}</p>
-                    <p><strong>Username:</strong> ${decryptedUsername}</p>
+                    <p><strong>Service:</strong> ${service}</p>
+                    <p><strong>Email:</strong> ${email}</p>
+                    <p><strong>Username:</strong> ${username}</p>
                     <p class="password-item-password" style="display:none;"><strong>Password:</strong> ${decryptedPassword}</p>
                     <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
                 `;
@@ -222,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Search function
 function searchDatabase(databaseName, storeName, searchKey, searchValue) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
       // Open a connection to the database
       const request = indexedDB.open(databaseName, currentVersion);
 
