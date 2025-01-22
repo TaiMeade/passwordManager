@@ -123,13 +123,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const listItem = document.createElement('div');
                 listItem.classList.add('password-item');
-                listItem.innerHTML = `
+                if (document.getElementById('toggle-visibility').checked) {
+                  console.log("it is checked");
+                  listItem.innerHTML = `
+                    <p><strong>Service:</strong> ${service}</p>
+                    <p><strong>Email:</strong> ${email}</p>
+                    <p><strong>Username:</strong> ${username}</p>
+                    <p class="password-item-password" style="display:block;"><strong>Password:</strong> ${decryptedPassword}</p>
+                    <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
+                `;
+                } else {
+                  console.log("it is NOT checked");
+                  listItem.innerHTML = `
                     <p><strong>Service:</strong> ${service}</p>
                     <p><strong>Email:</strong> ${email}</p>
                     <p><strong>Username:</strong> ${username}</p>
                     <p class="password-item-password" style="display:none;"><strong>Password:</strong> ${decryptedPassword}</p>
                     <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
                 `;
+                }
+                
                 passwordList.appendChild(listItem);
             }
 
