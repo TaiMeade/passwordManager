@@ -74,6 +74,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   });
   
+  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // ----------------------------------------------------------- Clear Form Fields ------------------------------------------------------------------------------------------------
+  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
   function clearFormFields() {
     // Clear and explicitly re-enable the input fields
     const serviceField = document.getElementById('service');
@@ -98,6 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Refocus on the first input for convenience
   }
   
+  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // ----------------------------------------------------------- Display Saved Passwords ------------------------------------------------------------------------------------------
+  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
   async function displaySavedPasswords() {
     const dbRequest = indexedDB.open('PasswordManager', currentVersion);
 
@@ -227,6 +235,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // ----------------------------------------------------------- Search Database Method -------------------------------------------------------------------------------------------
+  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 // The outcome of this method is what I had originally envisioned...after consulting ChatGPT I used it's method to:
 // First, retrieve all entries, then use Javascript to filter the data down to what meets the search criteria.
 function searchDatabaseVersion2(searchTerm) {
@@ -301,14 +313,15 @@ function searchDatabaseVersion2(searchTerm) {
 //   });
 // }
 
+  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // ----------------------------------------------------------- Search Logic -----------------------------------------------------------------------------------------------------
+  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // Searching logic
   const searchBar = document.getElementById('search-bar');
   const passwordListHeader = document.getElementById('passwordListHeader');
   const passwordList = document.getElementById('passwordList');
   const searchByWhat = document.getElementById('searchByWhat');
-
-
 
   searchBar.addEventListener('input', function(event) {
     const query = event.target.value;
@@ -317,13 +330,23 @@ function searchDatabaseVersion2(searchTerm) {
         searchDatabaseVersion2(query).then(results => {
           // Display results
           passwordListHeader.innerHTML = 'Search Results';
-          passwordList.innerHTML = results.map(result => 
-            `<div class="password-item">
-            <p><strong>Service:</strong> ${result.service}</p>
-            <p><strong>Email:</strong> ${result.email}</p>
-            <p><strong>Username:</strong> ${result.username}</p>
-            <p class="password-item-password" style="display:none;"><strong>Password:</strong> ${result.password}</p>
-            </div>`).join('')
+          if (document.getElementById('toggle-visibility').checked) {
+            passwordList.innerHTML = results.map(result => 
+              `<div class="password-item">
+              <p><strong>Service:</strong> ${result.service}</p>
+              <p><strong>Email:</strong> ${result.email}</p>
+              <p><strong>Username:</strong> ${result.username}</p>
+              <p class="password-item-password" style="display:block;"><strong>Password:</strong> ${result.password}</p>
+              </div>`).join('')
+          } else {
+            passwordList.innerHTML = results.map(result => 
+              `<div class="password-item">
+              <p><strong>Service:</strong> ${result.service}</p>
+              <p><strong>Email:</strong> ${result.email}</p>
+              <p><strong>Username:</strong> ${result.username}</p>
+              <p class="password-item-password" style="display:none;"><strong>Password:</strong> ${result.password}</p>
+              </div>`).join('')
+          }
         }).catch(error => {
         console.error(error);
         passwordListHeader.innerHTML = "Error during search";
@@ -335,6 +358,9 @@ function searchDatabaseVersion2(searchTerm) {
     }
   });
 
+  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // ----------------------------------------------------------- Self-Destruct Button ---------------------------------------------------------------------------------------------
+  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
   // Self-Destruct button event listener (delete the database)
   const selfDestructButton = document.getElementById("self-destruct");
