@@ -124,7 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const listItem = document.createElement('div');
                 listItem.classList.add('password-item');
                 if (document.getElementById('toggle-visibility').checked) {
-                  console.log("it is checked");
                   listItem.innerHTML = `
                     <p><strong>Service:</strong> ${service}</p>
                     <p><strong>Email:</strong> ${email}</p>
@@ -133,7 +132,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
                 `;
                 } else {
-                  console.log("it is NOT checked");
                   listItem.innerHTML = `
                     <p><strong>Service:</strong> ${service}</p>
                     <p><strong>Email:</strong> ${email}</p>
@@ -229,46 +227,79 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+// The outcome of this method is what I had originally envisioned...after consulting ChatGPT I used it's method to:
+// First, retrieve all entries, then use Javascript to filter the data down to what meets the search criteria.
+function searchDatabaseVersion2(searchTerm) {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("PasswordManager", currentVersion);
+    request.onsuccess = function(event) {
+        const db = event.target.result;
+        const transaction = db.transaction(["passwords"], "readonly");
+        const store = transaction.objectStore("passwords");
+        const getAllRequest = store.getAll();
 
-// Search function
-function searchDatabase(databaseName, storeName, searchKey, searchValue) {
-  return new Promise(async (resolve, reject) => {
-      // Open a connection to the database
-      const request = indexedDB.open(databaseName, currentVersion);
+        getAllRequest.onsuccess = async function() {
+          
+            const results = getAllRequest.result.filter(entry =>
+                entry.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                entry.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                entry.username.toLowerCase().includes(searchTerm.toLowerCase()) // ||
+                // entry.password.toLowerCase().includes(searchTerm.toLowerCase()) // removed because this would cause some things to pop up when the substring being searched is present within the encrypted password
+            );
 
-      request.onerror = (event) => {
-          reject(`Failed to open the database: ${event.target.errorCode}`);
-      };
+            for (let result of results) {
+              result.password = await window.electronAPI.decrypt(result.password);
+            }
 
-      request.onsuccess = (event) => {
-          const db = event.target.result;
-          const transaction = db.transaction(storeName, "readonly");
-          const objectStore = transaction.objectStore(storeName);
-          const index = objectStore.index(searchKey);
+            resolve(results);
+        };
 
-          const results = [];
-          const query = index.openCursor(IDBKeyRange.only(searchValue));
-
-          query.onerror = (event) => {
-              reject(`Error during search: ${event.target.errorCode}`);
-          };
-
-          query.onsuccess = (event) => {
-              const cursor = event.target.result;
-              if (cursor) {
-                  results.push(cursor.value); // Collect matching records
-                  cursor.continue();
-              } else {
-                  resolve(results); // Resolve promise with results when done
-              }
-          };
-      };
-
-      request.onupgradeneeded = () => {
-          reject("Database schema does not match expected.");
-      };
+        getAllRequest.onerror = function() {
+            reject(getAllRequest.error);
+        };
+    };
   });
 }
+
+// Search function
+// function searchDatabase(databaseName, storeName, searchKey, searchValue) {
+//   return new Promise(async (resolve, reject) => {
+//       // Open a connection to the database
+//       const request = indexedDB.open(databaseName, currentVersion);
+
+//       request.onerror = (event) => {
+//           reject(`Failed to open the database: ${event.target.errorCode}`);
+//       };
+
+//       request.onsuccess = (event) => {
+//           const db = event.target.result;
+//           const transaction = db.transaction(storeName, "readonly");
+//           const objectStore = transaction.objectStore(storeName);
+//           const index = objectStore.index(searchKey);
+
+//           const results = [];
+//           const query = index.openCursor(IDBKeyRange.only(searchValue));
+
+//           query.onerror = (event) => {
+//               reject(`Error during search: ${event.target.errorCode}`);
+//           };
+
+//           query.onsuccess = (event) => {
+//               const cursor = event.target.result;
+//               if (cursor) {
+//                   results.push(cursor.value); // Collect matching records
+//                   cursor.continue();
+//               } else {
+//                   resolve(results); // Resolve promise with results when done
+//               }
+//           };
+//       };
+
+//       request.onupgradeneeded = () => {
+//           reject("Database schema does not match expected.");
+//       };
+//   });
+// }
 
 
 // Searching logic
@@ -282,17 +313,18 @@ function searchDatabase(databaseName, storeName, searchKey, searchValue) {
   searchBar.addEventListener('input', function(event) {
     const query = event.target.value;
     if (query.length > 0) {
-      searchDatabase('PasswordManager', 'passwords', searchByWhat.value, query).then(results => {
-        // Display results
-        passwordListHeader.innerHTML = 'Search Results';
-        passwordList.innerHTML = results.map(result => 
-          `<div class="password-item">
-          <p><strong>Service:</strong> ${result.service}</p>
-          <p><strong>Email:</strong> ${result.email}</p>
-          <p><strong>Username:</strong> ${result.username}</p>
-          <p class="password-item-password" style="display:none;"><strong>Password:</strong> ${result.password}</p>
-          </div>`).join('')
-      }).catch(error => {
+      // searchDatabase('PasswordManager', 'passwords', searchByWhat.value, query).then(results => { no longer used thanks to ChatGPT recommendation of using javascript to filter
+        searchDatabaseVersion2(query).then(results => {
+          // Display results
+          passwordListHeader.innerHTML = 'Search Results';
+          passwordList.innerHTML = results.map(result => 
+            `<div class="password-item">
+            <p><strong>Service:</strong> ${result.service}</p>
+            <p><strong>Email:</strong> ${result.email}</p>
+            <p><strong>Username:</strong> ${result.username}</p>
+            <p class="password-item-password" style="display:none;"><strong>Password:</strong> ${result.password}</p>
+            </div>`).join('')
+        }).catch(error => {
         console.error(error);
         passwordListHeader.innerHTML = "Error during search";
         passwordList.innerHTML = error;
