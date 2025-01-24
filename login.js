@@ -26,6 +26,7 @@ document.getElementById("login").addEventListener("click", async () => {
             const decryptedPassword = await window.electronAPI.decrypt(storedEncryptedPassword);
 
             if (decryptedPassword === enteredPassword) {
+                window.location.href = "welcome.html";
                 setTimeout(() => {
                     window.location.href = "index.html"; // Redirect to main app
                 }, 5000)
