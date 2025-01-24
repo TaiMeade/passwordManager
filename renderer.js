@@ -1,4 +1,4 @@
-const currentVersion = 12;
+window.currentVersion = 13;
 
 document.addEventListener('DOMContentLoaded', () => {
     displaySavedPasswords(); // Display saved passwords when the page loads
