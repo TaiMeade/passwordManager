@@ -8,87 +8,19 @@
         <script>
             setTimeout(() => {
                 window.location.href = "index.html";
-            }, 3000)
+            }, 5000)
         </script>
-        <style>
-            body {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-                background-color: #f4f4f4;
-                transition: opacity 2s ease-out, transform 2s ease-in-out;
-            }
-
-            .disappear {
-                opacity: 0;
-                transform: scale(0);
-            }
-
-            .lock {
-                position: relative;
-                width: 80px;
-                height: 60px;
-                background: #333;
-                border-radius: 10px;
-            }
-
-            .shackle {
-                position: absolute;
-                width: 50px;
-                height: 50px;
-                border: 8px solid #333;
-                border-bottom: none;
-                border-radius: 50px 50px 0 0;
-                top: -40px;
-                left: 50%;
-                transform: translateX(-50%);
-                animation: unlock 3s ease-in-out infinite;
-            }
-
-            .keyhole {
-                position: absolute;
-                width: 10px;
-                height: 15px;
-                background: #f4f4f4;
-                border-radius: 5px;
-                bottom: 10px;
-                left: 50%;
-                transform: translateX(-50%);
-            }
-
-            .keyhole::before {
-                content: "";
-                position: absolute;
-                width: 6px;
-                height: 6px;
-                background: #f4f4f4;
-                border-radius: 50%;
-                top: -8px;
-                left: 50%;
-                transform: translateX(-50%);
-            }
-
-            @keyframes unlock {
-                0%, 100% {
-                    transform: translateX(-50%) translateY(0) rotate(0);
-                }
-                50% {
-                    transform: translateX(-50%) translateY(-15px) rotate(20deg);
-                }
-            }
-        </style>
     </head>
     <body>
-        <div class="lock">
-            <div class="shackle"></div>
-            <div class="keyhole"></div>
-        </div>
+        <input type="checkbox" class="lock" id="lock">
         
         <script>
             setTimeout(() => {
+                document.getElementById("lock").checked = true;
+            }, 500)
+            setTimeout(() => {
                     document.body.classList.add("disappear");
-                }, 1000); // Triggers after 1 second
+                }, 2000); // Triggers after 1 second
         </script>
     </body>
 </html>

@@ -1,0 +1,62 @@
+/* Styling for welcome page */
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #1e1e1e;
+    transition: opacity 3s ease-out, transform 3s ease-in-out;
+    overflow: hidden;
+}
+
+.disappear {
+    opacity: 0;
+    transform: scale(0);
+}
+
+.lock {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    appearance: none;
+}
+
+.lock::before, .lock::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin: auto;
+    transition: all 1s ease-out;
+}
+
+.lock::before {
+    bottom: 30px;
+    width: 100px;
+    height: 80px;
+    background-color: #dc2f02;
+    border-radius: 4px;
+    z-index: 2;
+}
+
+.lock::after {
+    top: 28px;
+    width: 60px;
+    height: 60px;
+    border: 4px solid #dc2f02;
+    border-bottom: none;
+    border-top-left-radius: 1000px;
+    border-top-right-radius: 1000px;
+    transform-origin: bottom left;
+    z-index: 1;
+}
+
+.lock:checked::after {
+    border-color: #38b000;
+    transform: rotate(-25deg);
+}
+
+.lock:checked::before {
+    background: #38b000;
+} 
