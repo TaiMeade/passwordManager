@@ -5,6 +5,16 @@ document.getElementById("saveMaster").addEventListener("click", async () => {
         return;
     }
 
+    // Password must contain:
+    //  9 or more characters
+    //  One lower-case character
+    //  One upper-case character
+    //  One special character
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{9,}$/.test(password)) {
+        alert("Password does not meet the minimum requirements: \n    Length must be longer than 8 characters.\n    Must contain at least 1 special character.\n    Must contain at least 1 lower-case letter.\n    Must contain at least 1 upper-case letter.");
+        return
+    }
+
     // Encrypt password before storing
     const encryptedPassword = await window.electronAPI.encrypt(password);
 

@@ -8,10 +8,13 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <script>
-    // window.addEventListener('load', function() {
-    //   document.body.classList.add('show');
-    // })
-    console.log("added show");
+    window.addEventListener('load', function() {
+      document.body.classList.add('show');
+    })
+
+    window.addEventListener('beforeunload', function() {
+      navigator.clipboard.writeText(" "); // seems to only sometimes work as of now...not sure what the exact pattern going on is though
+    })
   </script>
 </head>
 <body>
@@ -51,6 +54,7 @@
               <input type="checkbox" id="toggle-visibility"/>
               <span class="slider"></span>
             </label>
+            <p id="num-entries"></p>
             <button id="self-destruct" class="self-destruct-button">Self-Destruct</button>
           </div>
         </div>

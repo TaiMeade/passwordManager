@@ -1,4 +1,6 @@
 /* Styling for welcome page */
+/* Credit to: https://www.youtube.com/watch?v=hSwjdSeY4ZQ&list=PLsj-qg9t5QLsYhFhxWKeo-H-RhNe9G3mC&index=4 for the lock design...
+   I made some adjustments for scaling but that is all */
 body {
     display: flex;
     justify-content: center;

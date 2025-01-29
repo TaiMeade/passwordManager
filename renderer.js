@@ -34,6 +34,11 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Please fill in all fields.');
       return;
     }
+
+    if (!/.+@.+/.test(email)) {
+      alert("Invalid Email.")
+      return
+    }
   
     const dbRequest = indexedDB.open('PasswordManager', currentVersion);
   
@@ -124,7 +129,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             passwordList.innerHTML = ''; // Clear previous list
 
+            // Used to track the number of entries
+            let numEntries = 0
+
             for (let key = 0; key < passwords.length; key++) {
+                numEntries++;
                 const { service, email, username, password } = passwords[key];
 
                 const decryptedPassword = await window.electronAPI.decrypt(password);
@@ -138,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p><strong>Username:</strong> ${username}</p>
                     <p class="password-item-password" style="display:block;"><strong>Password:</strong> ${decryptedPassword}</p>
                     <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
+                    <button class="copy-btn fa fa-clipboard" style="font-size:24px;color:grey"></button>
                 `;
                 } else {
                   listItem.innerHTML = `
@@ -146,6 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p><strong>Username:</strong> ${username}</p>
                     <p class="password-item-password" style="display:none;"><strong>Password:</strong> ${decryptedPassword}</p>
                     <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
+                    <button class="copy-btn fa fa-clipboard" data-id="${keyList[key]}" style="font-size:24px;color:grey"></button>
                 `;
                 }
                 
@@ -159,6 +170,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     removePassword(key);
                 });
             });
+
+            // attach add to clipboard to each copy button
+            document.querySelectorAll('.copy-btn').forEach((button) => {
+              button.addEventListener('click', (e) => {
+                const parent = button.parentElement
+                navigator.clipboard.writeText(parent.children[3].innerText.substring(9));
+                
+                // Clears the password from the clipboard...doesn't actually clear it...just writes a space " " so it cannot be 
+                // easily pasted on accident later or by another user later
+                setTimeout(() => {
+                  navigator.clipboard.writeText(" "); // works on occasion...when window is in focus I believe
+                }, 30000);
+              });
+          });
+
+          document.getElementById("num-entries").innerHTML = "<strong>Entry Count: </strong>" + numEntries;
         };
     };
 }
