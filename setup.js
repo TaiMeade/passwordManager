@@ -1,3 +1,11 @@
+// When enter is pressed while in input...submit the form AKA click the Save button
+document.getElementById("masterPassword").addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        document.getElementById("saveMaster").click();
+    }
+})
+
 document.getElementById("saveMaster").addEventListener("click", async () => {
     const password = document.getElementById("masterPassword").value;
     if (!password) {
