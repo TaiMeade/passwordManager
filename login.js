@@ -27,9 +27,6 @@ document.getElementById("login").addEventListener("click", async () => {
 
             if (decryptedPassword === enteredPassword) {
                 window.location.href = "welcome.html";
-                setTimeout(() => {
-                    window.location.href = "index.html"; // Redirect to main app
-                }, 5000)
             } else {
                 alert("Incorrect password. Try again.");
             }
