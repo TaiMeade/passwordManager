@@ -5,6 +5,9 @@ dbRequest.onupgradeneeded = (event) => {
     if (!db.objectStoreNames.contains("settings")) {
         db.createObjectStore("settings", { keyPath: "id" });
     }
+    if (!db.objectStoreNames.contains("passwords")) {
+        db.createObjectStore("passwords", { autoIncrement: true, });
+    }
 };
 
 dbRequest.onsuccess = (event) => {
