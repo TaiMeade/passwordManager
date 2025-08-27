@@ -26,13 +26,13 @@ Unlike cloud-based password managers, The Vault keeps your data offline, ensurin
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/the-vault.git
+   git clone https://github.com/TaiMeade/passwordManager.git
    ```
 
 2. Navigate to the project directory:
 
    ```bash
-   cd the-vault
+   cd passwordManager
    ```
 
 3. Install dependencies:
@@ -50,39 +50,18 @@ Unlike cloud-based password managers, The Vault keeps your data offline, ensurin
 ## Usage
 
 1. Launch the app.
-2. Create a master password (required for accessing your saved passwords). (to be added)
+2. Create a master password (required for accessing your saved passwords).
 3. Add, view, or manage your passwords within the app.
 
 ## Security Measures
 
-- **Master Password**: Protects access to the app. (to be added)
-- **Encryption**: All passwords are encrypted using AES-256 encryption. (to be added)
+- **Master Password**: Protects access to the app.
+- **Encryption**: All passwords are encrypted using Electron's built-in safeEncryption() function (subject to change).
 - **No Cloud Sync**: Prevents unauthorized access via online platforms.
 
-## Contributing
+## Suggestions
 
-We welcome contributions to improve the app! To contribute:
-
-1. Fork the repository.
-2. Create a new branch:
-
-   ```bash
-   git checkout -b feature-name
-   ```
-
-3. Make your changes and commit them:
-
-   ```bash
-   git commit -m "Add feature-name"
-   ```
-
-4. Push to the branch:
-
-   ```bash
-   git push origin feature-name
-   ```
-
-5. Open a pull request on GitHub.
+You can email me at taitaishi123@gmail.com with any suggestions you have!
 
 ---
 
