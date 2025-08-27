@@ -5,10 +5,10 @@ The Vault is a secure, lightweight application designed to store your passwords 
 ## Features
 
 - **Local Storage Only**: All passwords are securely stored on your device.
-- **Encryption**: Passwords are encrypted using strong algorithms to protect your data. (to be added shortly)
+- **Encryption**: Passwords are encrypted using strong algorithms to protect your data.
 - **User-Friendly Interface**: Simple and intuitive interface for managing passwords.
 - **Offline Access**: No internet connection required to access your saved passwords.
-- **Cross-Platform**: Available for Windows, macOS, and Linux. (to bed added shortly...plan to deploy the app in the near future)
+- **Cross-Platform**: Available for Windows, macOS, and Linux. (to be added shortly...plan to deploy the app in the near future)
 
 ## Why Choose The Vault?
 
