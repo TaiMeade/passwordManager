@@ -56,7 +56,7 @@ Unlike cloud-based password managers, The Vault keeps your data offline, ensurin
 ## Security Measures
 
 - **Master Password**: Protects access to the app.
-- **Encryption**: All passwords are encrypted using Electron's built-in safeEncryption() function (subject to change).
+- **Encryption**: All passwords are encrypted using Electron's built-in safeStorage() function (subject to change).
 - **No Cloud Sync**: Prevents unauthorized access via online platforms.
 
 ## Suggestions
