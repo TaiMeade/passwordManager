@@ -92,14 +92,30 @@ body {
     font-weight: bold;
     color: #e0e0e0; /* Light text */
 }
+
 #passwordFormHeader {
     margin-bottom: 15px;
     margin-top: 0px;
+    background-color: #1e1e1e;
+    font-size: 20px;
+    color: #e0e0e0;
+    border: 1px solid #4caf50;
+    padding: 1%;
+    border-radius: 5px;
+}
+
+#passwordFormHeader option {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border: none;
+    padding: 10px;
+    font-size: 16px;
 }
 
 /* Input field styling */
 #passwordForm input[type="text"],
-#passwordForm input[type="password"] {
+#passwordForm input[type="password"],
+#passwordForm textarea {
     width: 100%;
     padding: 10px;
     margin-bottom: 15px;
@@ -109,6 +125,11 @@ body {
     border-radius: 4px;
     font-size: 14px;
     box-sizing: border-box;
+}
+
+#passwordForm textarea {
+    resize: vertical; /* Allow vertical resizing */
+    min-height: 60px; /* Minimum height for textarea */
 }
 
 /* Input hover and focus effects */

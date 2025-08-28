@@ -8,6 +8,18 @@ dbRequest.onupgradeneeded = (event) => {
     if (!db.objectStoreNames.contains("passwords")) {
         db.createObjectStore("passwords", { autoIncrement: true, });
     }
+    if (!db.objectStoreNames.contains("cards")) {
+        db.createObjectStore("cards", { autoIncrement: true, });
+    }
+    if (!db.objectStoreNames.contains("bankAccounts")) {
+        db.createObjectStore("bankAccounts", { autoIncrement: true, });
+    }
+    if (!db.objectStoreNames.contains("ids")) {
+        db.createObjectStore("ids", { autoIncrement: true, });
+    }
+    if (!db.objectStoreNames.contains("notes")) {
+        db.createObjectStore("notes", { autoIncrement: true, });
+    }
 };
 
 dbRequest.onsuccess = (event) => {

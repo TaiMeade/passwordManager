@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Password Manager</title>
+  <title>The Vault</title>
   <link rel="stylesheet" href="style.css" id="theme-link">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -63,19 +63,28 @@
 
   <!-- Creating a new password/item combo form -->
   <form id="passwordForm">
-    <h3 id="passwordFormHeader">New Entry:</h3>
-    <label for="service">Service:</label>
-    <input maxlength="30" type="text" id="service" required />
-    <label for="email">Email:</label>
-    <input maxlength="30" type="text" id="email" required />
-    <label for="username">Username:</label>
-    <input maxlength="30" type="text" id="username" required />
-    <label for="password">
-      Password:
-      <button id="toggle-password" type="button" class="fas fa-eye" style="width:10%;height:10%; background-color: rgba(0, 0, 0, 0); float:right; padding-top: 5px;"></button>
-      <button id="generate-password" type="button" class="fas fa-key" style="width:10%;height:10%; background-color: rgba(0, 0, 0, 0); float:right; padding-top: 5px;"></button>
-    </label>
-    <input maxlength="30" type="password" id="password" required />
+    <select id="passwordFormHeader">
+      <option value="Password">Password:</option>
+      <option value="Card">Credit/Debit Card:</option>
+      <option value="Bank">Bank Account:</option>
+      <option value="ID">ID Numbers:</option>
+      <option value="Note">Notes:</option>
+    </select>
+
+    <div id="formFields">
+      <label for="service">Service:</label>
+      <input maxlength="30" type="text" id="service" required />
+      <label for="email">Email:</label>
+      <input maxlength="30" type="text" id="email" required />
+      <label for="username">Username:</label>
+      <input maxlength="30" type="text" id="username" required />
+      <label for="password">
+        Password:
+        <button id="toggle-password" type="button" class="fas fa-eye" style="width:10%;height:10%; background-color: rgba(0, 0, 0, 0); float:right; padding-top: 5px;"></button>
+        <button id="generate-password" type="button" class="fas fa-key" style="width:10%;height:10%; background-color: rgba(0, 0, 0, 0); float:right; padding-top: 5px;"></button>
+      </label>
+      <input maxlength="30" type="password" id="password" required />
+    </div>
     <button type="submit">Save</button>
   </form>
 

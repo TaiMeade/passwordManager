@@ -1,4 +1,4 @@
-window.currentVersion = 16;
+window.currentVersion = 1;
 
 // Generate a random password of a provided length
 function generatePassword(length) {
@@ -10,6 +10,56 @@ function generatePassword(length) {
   }
   return password;
 }
+
+// dynamically change the form fields based on the selected option in the dropdown
+document.getElementById('passwordFormHeader').addEventListener('change', (e) => {
+  const selectedOption = e.target.value;
+
+  // handle changing the form fields based on the selected option
+  if (selectedOption === "Password") {
+    document.getElementById('formFields').innerHTML = `<label for="service">Service:</label>
+                                                       <input maxlength="30" type="text" id="service" required />
+                                                       <label for="email">Email:</label>
+                                                       <input maxlength="30" type="text" id="email" required />
+                                                       <label for="username">Username:</label>
+                                                       <input maxlength="30" type="text" id="username" required />
+                                                       <label for="password">Password:
+                                                       <button id="toggle-password" type="button" class="fas fa-eye" style="width:10%;height:10%; background-color: rgba(0, 0, 0, 0); float:right; padding-top: 5px;"></button>
+                                                       <button id="generate-password" type="button" class="fas fa-key" style="width:10%;height:10%; background-color: rgba(0, 0, 0, 0); float:right; padding-top: 5px;"></button>
+                                                       </label>  
+                                                       <input maxlength="30" type="password" id="password" required />`;
+
+    document.getElementById('generate-password').addEventListener('click', () => {
+      passwordField.value = generatePassword(16); // Generate a 16-character password
+    });
+  } else if (selectedOption === "Card") {
+    document.getElementById('formFields').innerHTML = `<label for="cardholder">Cardholder:</label>
+                                                       <input maxlength="30" type="text" id="cardholder" required />
+                                                       <label for="cardnumber">Card Number:</label>
+                                                       <input maxlength="19" type="text" id="cardnumber" required />
+                                                       <label for="expirydate">Expiry Date:</label>
+                                                       <input maxlength="5" type="text" id="expirydate" placeholder="MM/YY" required />
+                                                       <label for="cvv">CVV:</label>
+                                                       <input maxlength="4" type="password" id="cvv" required />`
+  } else if (selectedOption === "Bank") {
+    document.getElementById('formFields').innerHTML = `<label for="bank">Bank/Financial Institution:</label>
+                                                       <input maxlength="30" type="text" id="bank" required />
+                                                       <label for="routing">Routing Number:</label>
+                                                       <input type="text" id="routing" required></input>
+                                                       <label for="account">Account Number:</label>
+                                                       <input type="password" id="account" required></input>`;
+  } else if (selectedOption === "ID") {
+    document.getElementById('formFields').innerHTML = `<label for="idType">ID Type (Driver's License, Passport, etc.):</label>
+                                                       <input maxlength="30" type="text" id="idType" required />
+                                                       <label for="idNumber">ID Number:</label>
+                                                       <input maxlength="30" type="text" id="idNumber" required />`;
+  } else if (selectedOption === "Note") {
+    document.getElementById('formFields').innerHTML = `<label for="noteTitle">Title:</label>
+                                                       <input maxlength="30" type="text" id="noteTitle" required />
+                                                       <label for="noteContent">Content:</label>
+                                                       <textarea id="noteContent" rows="10" cols="50" required></textarea>`;
+  }
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     displaySavedPasswords(); // Display saved passwords when the page loads
@@ -38,60 +88,216 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('passwordForm').addEventListener('submit', async (e) => {
     e.preventDefault(); // Prevent form from refreshing the page
 
-  
-    // Get input values
-    const service = document.getElementById('service').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const username = document.getElementById('username').value.trim();
-    const password = await window.electronAPI.encrypt(document.getElementById('password').value.trim());
-  
-    if (!service || !email || !username || !password) {
-      alert('Please fill in all fields.');
-      return;
-    }
+    // handle saving the password entry to IndexedDB
+    if (document.getElementById('passwordFormHeader').value === "Password") {
+      const service = document.getElementById('service').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const username = document.getElementById('username').value.trim();
+      const password = await window.electronAPI.encrypt(document.getElementById('password').value.trim());
 
-    if (!/.+@.+/.test(email)) {
-      alert("Invalid Email.")
-      return
-    }
-  
-    const dbRequest = indexedDB.open('PasswordManager', currentVersion);
-  
-    
-    dbRequest.onupgradeneeded = (event) => {
-      const db = event.target.result;
-
-      if (!db.objectStoreNames.contains('passwords')) {
-        db.createObjectStore('passwords', { autoIncrement: true, });
+      if (!service || !email || !username || !password) {
+        alert('Please fill in all fields.');
+        return;
       }
-    };
+
+      if (!/.+@.+/.test(email)) {
+        alert("Invalid Email.")
+        return
+      }
   
-    dbRequest.onsuccess = (event) => {
-      const db = event.target.result;
-      const transaction = db.transaction('passwords', 'readwrite');
-      const store = transaction.objectStore('passwords');
-      store.put({ service, email, username, password });
-  
-      transaction.oncomplete = () => {
+      const dbRequest = indexedDB.open('PasswordManager', currentVersion);
+    
+      dbRequest.onsuccess = (event) => {
+        const db = event.target.result;
+        const transaction = db.transaction('passwords', 'readwrite');
+        const store = transaction.objectStore('passwords');
+        store.put({ service, email, username, password });
+
+        transaction.oncomplete = () => {
         // alert('Password saved successfully!');
-  
+
         // Clear form fields
         clearFormFields();
-  
+
         // Refresh the password list
         displaySavedPasswords();
+        };
+
+        transaction.onerror = (err) => {
+          console.error('Error saving password:', err);
+          alert('Failed to save password. Please try again.');
+        };
       };
-  
-      transaction.onerror = (err) => {
-        console.error('Error saving password:', err);
-        alert('Failed to save password. Please try again.');
+      
+      dbRequest.onerror = (err) => {
+        console.error('Database error:', err);
+        alert('Failed to open the database. Please try again.');
       };
-    };
+    }
+    
+    // handle saving the card entry to IndexedDB
+    else if (document.getElementById('passwordFormHeader').value === "Card") {
+      const cardholder = document.getElementById('cardholder').value.trim();
+      const cardnumber = document.getElementById('cardnumber').value.trim(); // repurposed field
+      const expirydate = document.getElementById('expirydate').value.trim(); // repurposed field
+      const cvv = await window.electronAPI.encrypt(document.getElementById('cvv').value.trim()); // repurposed field
+
+      if (!cardholder || !cardnumber || !expirydate || !cvv) {
+        alert('Please fill in all fields.');
+        return;
+      }
   
-    dbRequest.onerror = (err) => {
-      console.error('Database error:', err);
-      alert('Failed to open the database. Please try again.');
-    };
+      const dbRequest = indexedDB.open('PasswordManager', currentVersion);
+    
+      dbRequest.onsuccess = (event) => {
+        const db = event.target.result;
+        const transaction = db.transaction('cards', 'readwrite');
+        const store = transaction.objectStore('cards');
+        store.put({ cardholder, cardnumber, expirydate, cvv });
+
+        transaction.oncomplete = () => {
+        // alert('Password saved successfully!');
+
+        // Clear form fields
+        clearFormFields();
+
+        // Refresh the password list
+        displaySavedPasswords();
+        };
+
+        transaction.onerror = (err) => {
+          console.error('Error saving password:', err);
+          alert('Failed to save password. Please try again.');
+        };
+      };
+      
+      dbRequest.onerror = (err) => {
+        console.error('Database error:', err);
+        alert('Failed to open the database. Please try again.');
+      };
+    } 
+    
+    // handle saving the bank entry to IndexedDB
+    else if (document.getElementById('passwordFormHeader').value === "Bank") {
+      const bank = document.getElementById('bank').value.trim();
+      const routing = document.getElementById('routing').value.trim(); 
+      const account = await window.electronAPI.encrypt(document.getElementById('account').value.trim());
+
+      if (!bank || !routing || !account) {
+        alert('Please fill in all fields.');
+        return;
+      }
+  
+      const dbRequest = indexedDB.open('PasswordManager', currentVersion);
+    
+      dbRequest.onsuccess = (event) => {
+        const db = event.target.result;
+        const transaction = db.transaction('banks', 'readwrite');
+        const store = transaction.objectStore('banks');
+        store.put({ bank, routing, account });
+
+        transaction.oncomplete = () => {
+        // alert('Password saved successfully!');
+
+        // Clear form fields
+        clearFormFields();
+
+        // Refresh the password list
+        displaySavedPasswords();
+        };
+
+        transaction.onerror = (err) => {
+          console.error('Error saving password:', err);
+          alert('Failed to save password. Please try again.');
+        };
+      };
+      
+      dbRequest.onerror = (err) => {
+        console.error('Database error:', err);
+        alert('Failed to open the database. Please try again.');
+      };
+    }
+
+    // handle saving the ID entry to IndexedDB
+    else if (document.getElementById('passwordFormHeader').value === "ID") {
+      const idType = document.getElementById('idType').value.trim();
+      const idNumber = document.getElementById('idNumber').value.trim();
+      const encryptedIdNumber = await window.electronAPI.encrypt(idNumber);
+
+      if (!idType || !idNumber) {
+        alert('Please fill in all fields.');
+        return;
+      }
+  
+      const dbRequest = indexedDB.open('PasswordManager', currentVersion);
+    
+      dbRequest.onsuccess = (event) => {
+        const db = event.target.result;
+        const transaction = db.transaction('ids', 'readwrite');
+        const store = transaction.objectStore('ids');
+        store.put({ idType, encryptedIdNumber });
+
+        transaction.oncomplete = () => {
+        // alert('Password saved successfully!');
+
+        // Clear form fields
+        clearFormFields();
+
+        // Refresh the password list
+        displaySavedPasswords();
+        };
+
+        transaction.onerror = (err) => {
+          console.error('Error saving password:', err);
+          alert('Failed to save password. Please try again.');
+        };
+      };
+      
+      dbRequest.onerror = (err) => {
+        console.error('Database error:', err);
+        alert('Failed to open the database. Please try again.');
+      };
+    } 
+    
+    // handle saving the note entry to IndexedDB
+    else if (document.getElementById('passwordFormHeader').value === "Note") {
+      const noteTitle = document.getElementById('noteTitle').value.trim();
+      const noteContent = document.getElementById('noteContent').value.trim();
+
+      if (!noteTitle || !noteContent) {
+        alert('Please fill in all fields.');
+        return;
+      }
+  
+      const dbRequest = indexedDB.open('PasswordManager', currentVersion);
+    
+      dbRequest.onsuccess = (event) => {
+        const db = event.target.result;
+        const transaction = db.transaction('notes', 'readwrite');
+        const store = transaction.objectStore('notes');
+        store.put({ noteTitle, noteContent });
+
+        transaction.oncomplete = () => {
+        // alert('Password saved successfully!');
+
+        // Clear form fields
+        clearFormFields();
+
+        // Refresh the password list
+        displaySavedPasswords();
+        };
+
+        transaction.onerror = (err) => {
+          console.error('Error saving password:', err);
+          alert('Failed to save password. Please try again.');
+        };
+      };
+      
+      dbRequest.onerror = (err) => {
+        console.error('Database error:', err);
+        alert('Failed to open the database. Please try again.');
+      };
+    }
   });
   
   // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -100,26 +306,88 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function clearFormFields() {
     // Clear and explicitly re-enable the input fields
-    const serviceField = document.getElementById('service');
-    const emailField = document.getElementById('email');
-    const usernameField = document.getElementById('username');
-    const passwordField = document.getElementById('password');
-  
-    serviceField.value = '';
-    emailField.value = '';
-    usernameField.value = '';
-    passwordField.value = '';
+    if (document.getElementById('passwordFormHeader').value === "Password") {
+      const serviceField = document.getElementById('service');
+      const emailField = document.getElementById('email');
+      const usernameField = document.getElementById('username');
+      const passwordField = document.getElementById('password');
+    
+      serviceField.value = '';
+      emailField.value = '';
+      usernameField.value = '';
+      passwordField.value = '';
 
-  
-    serviceField.disabled = false;
-    emailField.disabled = false;
-    usernameField.disabled = false;
-    passwordField.disabled = false;
+    
+      serviceField.disabled = false;
+      emailField.disabled = false;
+      usernameField.disabled = false;
+      passwordField.disabled = false;
 
-    // Set serviceField (first input) as the active input...makes easier to input many passwords at once
-    serviceField.focus();
+      // Set serviceField (first input) as the active input...makes easier to input many passwords at once
+      serviceField.focus();
+    } else if (document.getElementById('passwordFormHeader').value === "Card") {
+      const cardholderField = document.getElementById('cardholder');
+      const cardnumberField = document.getElementById('cardnumber');
+      const expirydateField = document.getElementById('expirydate');
+      const cvvField = document.getElementById('cvv');
+    
+      cardholderField.value = '';
+      cardnumberField.value = '';
+      expirydateField.value = '';
+      cvvField.value = '';
+
+    
+      cardholderField.disabled = false;
+      cardnumberField.disabled = false;
+      expirydateField.disabled = false;
+      cvvField.disabled = false;
+
+      // Set cardholderField (first input) as the active input...makes easier to input many cards at once
+      cardholderField.focus();
+    } else if (document.getElementById('passwordFormHeader').value === "Bank") {
+      const bankField = document.getElementById('bank');
+      const routingField = document.getElementById('routing');
+      const accountField = document.getElementById('account');
+    
+      bankField.value = '';
+      routingField.value = '';
+      accountField.value = '';
+
+    
+      bankField.disabled = false;
+      routingField.disabled = false;
+      accountField.disabled = false;
+
+      // Set bankField (first input) as the active input...makes easier to input many banks at once
+      bankField.focus();
+    } else if (document.getElementById('passwordFormHeader').value === "ID") {  
+      const idTypeField = document.getElementById('idType');
+      const idNumberField = document.getElementById('idNumber');
+    
+      idTypeField.value = '';
+      idNumberField.value = '';
+
+    
+      idTypeField.disabled = false;
+      idNumberField.disabled = false;
+
+      // Set idTypeField (first input) as the active input...makes easier to input many IDs at once
+      idTypeField.focus();
+    } else if (document.getElementById('passwordFormHeader').value === "Note") {  
+      const noteTitleField = document.getElementById('noteTitle');
+      const noteContentField = document.getElementById('noteContent');
+    
+      noteTitleField.value = '';
+      noteContentField.value = '';
+
+    
+      noteTitleField.disabled = false;
+      noteContentField.disabled = false;
+
+      // Set noteTitleField (first input) as the active input...makes easier to input many notes at once
+      noteTitleField.focus();
+    }
   
-    // Refocus on the first input for convenience
   }
   
   // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

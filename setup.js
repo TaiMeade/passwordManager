@@ -33,6 +33,21 @@ document.getElementById("saveMaster").addEventListener("click", async () => {
         if (!db.objectStoreNames.contains("settings")) {
             db.createObjectStore("settings", { keyPath: "id" });
         }
+        if (!db.objectStoreNames.contains("passwords")) {
+            db.createObjectStore("passwords", { keyPath: "id" });
+        }
+        if (!db.objectStoreNames.contains("cards")) {
+            db.createObjectStore("cards", { keyPath: "id" });
+        }
+        if (!db.objectStoreNames.contains("bankAccounts")) {
+            db.createObjectStore("bankAccounts", { keyPath: "id" });
+        }
+        if (!db.objectStoreNames.contains("ids")) {
+            db.createObjectStore("ids", { keyPath: "id" });
+        }
+        if (!db.objectStoreNames.contains("notes")) {
+            db.createObjectStore("notes", { keyPath: "id" });
+        }
     };
     dbRequest.onsuccess = (event) => {
         const db = event.target.result;
