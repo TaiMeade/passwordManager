@@ -1,5 +1,16 @@
 window.currentVersion = 16;
 
+// Generate a random password of a provided length
+function generatePassword(length) {
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
+  let password = "";
+  for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * charset.length);
+      password += charset[randomIndex];
+  }
+  return password;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     displaySavedPasswords(); // Display saved passwords when the page loads
   });
@@ -7,7 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const passwordField = document.getElementById('password');
   const togglePassword = document.getElementById('toggle-password');
 
-  document.getElementById('toggle-password').addEventListener('click', () => {
+  document.getElementById('generate-password').addEventListener('click', () => {
+    passwordField.value = generatePassword(16); // Generate a 16-character password
+  });
+
+  togglePassword.addEventListener('click', () => {
     if (passwordField.type === "password") {
       passwordField.type = "text";
       togglePassword.classList.remove("fa-eye");
