@@ -1,19 +1,29 @@
 {
-  "name": "mypasswordmanager",
-  "version": "1.0.0",
-  "description": "Password Manager using electron",
-  "main": "main.js",
-  "scripts": {
-    "start": "electron ."
-  },
+  "name": "the-vault",
+  "version": "2.0.0",
+  "description": "A secure, local password manager built with Electron, Vue 3, Vuetify, and SQLite",
+  "main": "./src/main/index.js",
   "author": "Tai Meade",
   "license": "ISC",
-  "devDependencies": {
-    "electron": "^33.2.0"
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "rebuild": "electron-rebuild -f -w better-sqlite3"
   },
   "dependencies": {
-    "crypto-js": "^4.2.0",
-    "dotenv": "^16.4.7",
-    "electron-clear-data": "^1.0.5"
+    "@mdi/font": "^7.4.47",
+    "better-sqlite3": "^11.7.0",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0",
+    "vuetify": "^3.7.0"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.7.0",
+    "@vitejs/plugin-vue": "^5.2.0",
+    "electron": "^33.4.11",
+    "electron-vite": "^2.3.0",
+    "sass": "^1.83.0",
+    "vite-plugin-vuetify": "^2.0.4"
   }
 }
