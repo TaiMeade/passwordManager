@@ -1,75 +1,104 @@
-/* General Styling */
+/* =====================================================================
+   Login screen — responsive layout.
+   The container is centered with flexbox and the logo + form scale with
+   the viewport so this screen works on small laptop windows and large
+   monitors alike.
+   ===================================================================== */
+
+:root {
+    --bg: #1e1e1e;
+    --accent: #388e3c;
+    --accent-hover: #4caf50;
+    --logo-size: min(45vmin, 22rem);
+    --field-width: clamp(14rem, 30vw, 22rem);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
 body {
     margin: 0;
-    height: 100vh;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #1e1e1e;
+    padding: clamp(1rem, 3vw, 2rem);
+    background-color: var(--bg);
     font-family: Arial, sans-serif;
-    overflow: hidden;
 }
 
+/* Logo backdrop — sized in vmin so it stays proportional in any window. */
 .background-image {
     position: absolute;
-    top: 16%;
-    width: 50vw;
-    height: 50vh;
+    width: var(--logo-size);
+    height: var(--logo-size);
     background: url('./images/logo.png') no-repeat center;
-    background-size: cover;
+    background-size: contain;
+    pointer-events: none;
+    opacity: 0.95;
 }
 
 .login-container {
-    position: absolute;
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: var(--field-width);
+    z-index: 1;
+    margin-top: clamp(6rem, 22vmin, 14rem);
 }
 
 input[type="password"] {
-    padding: 10px;
-    font-size: 16px;
-    border-radius: 10px;
-    border: 1px solid rgba( 255, 255, 255, 0.5 );
-    box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
-    backdrop-filter: blur( 4px );
-    width: 200px;
+    padding: 0.625rem 0.75rem;
+    font-size: clamp(0.9rem, 0.4vw + 0.85rem, 1.1rem);
+    border-radius: 0.625rem;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    backdrop-filter: blur(4px);
+    width: 100%;
     background: rgba(255, 255, 255, 0.25);
     text-align: center;
-    color: #1e1e1e;
+    color: var(--bg);
 }
 
 input[type="password"]::placeholder {
-    color: #1e1e1e;
+    color: var(--bg);
 }
 
 #login-header {
-    color: #1e1e1e;
+    color: var(--bg);
     font-weight: 600;
-    top: -40px;
-    position: relative;
-    z-index: 1;
+    font-size: clamp(1.25rem, 1.5vw + 1rem, 2rem);
+    margin: 0 0 0.75rem;
+    text-align: center;
 }
 
 /* Login Button */
 #login {
-    padding: 10px 20px;
-    font-size: 16px;
+    padding: 0.625rem 1.25rem;
+    font-size: clamp(0.9rem, 0.4vw + 0.85rem, 1.1rem);
     color: white;
-    background-color: #388e3c; /* Green button background */
+    background-color: var(--accent);
     border: none;
-    border-radius: 5px;
+    border-radius: 0.3125rem;
     cursor: pointer;
-    transition: background-color 0.3s ease;
-    transition: 0.3s ease-in-out;
+    transition: background-color 0.3s ease, transform 0.3s ease-in-out;
     width: 100%;
-    margin-top: 10px;
-    position: relative;
-    top: 40px;
+    margin-top: 0.5rem;
 }
 
 #login:hover {
-    background-color: #4caf50; /* Darker green on hover */
+    background-color: var(--accent-hover);
     transform: scale(1.02);
 }
 

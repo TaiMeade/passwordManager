@@ -1,115 +1,197 @@
+/* =====================================================================
+   Dark theme — responsive layout.
+   Uses CSS custom properties + clamp/rem so the UI scales smoothly from
+   small windows (~640px) up through 4K. No fixed-pixel widths on
+   layout-critical elements.
+   ===================================================================== */
+
+:root {
+    /* Theme colors */
+    --bg: #1e1e1e;
+    --surface: #2c2c2c;
+    --surface-hover: #1e1e1e;
+    --text: #e0e0e0;
+    --text-muted: #b0b0b0;
+    --accent: #4caf50;
+    --accent-hover: #388e3c;
+    --accent-soft: #81c784;
+    --danger: #d32f2f;
+    --danger-hover: #b71c1c;
+    --danger-active: #9a0007;
+    --shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    --shadow-strong: 0 6px 12px rgba(0, 0, 0, 0.6);
+
+    /* Fluid spacing & sizing tokens */
+    --space-xs: clamp(0.25rem, 0.4vw, 0.5rem);
+    --space-sm: clamp(0.5rem, 0.8vw, 0.75rem);
+    --space-md: clamp(0.75rem, 1.2vw, 1.25rem);
+    --space-lg: clamp(1rem, 2vw, 2rem);
+    --space-xl: clamp(1.5rem, 3vw, 3rem);
+
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+
+    /* Fluid typography */
+    --font-sm: clamp(0.8125rem, 0.45vw + 0.7rem, 0.95rem);
+    --font-md: clamp(0.9rem, 0.5vw + 0.8rem, 1.05rem);
+    --font-lg: clamp(1rem, 0.6vw + 0.9rem, 1.25rem);
+    --font-xl: clamp(1.15rem, 0.9vw + 1rem, 1.6rem);
+
+    /* Element sizing */
+    --logo-size: clamp(2rem, 4vw, 3.25rem);
+    --tile-min: clamp(14rem, 22vw, 18rem);
+    --form-max: clamp(18rem, 40vw, 28rem);
+    --search-max: clamp(12rem, 40vw, 26rem);
+}
+
+/* Box-sizing reset so all sizing tokens behave consistently. */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 /* General styling */
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
 body {
     font-family: Arial, sans-serif;
-    background-color: #1e1e1e; /* Dark background */
-    color: #e0e0e0; /* Light text for contrast */
+    background-color: var(--bg);
+    color: var(--text);
     opacity: 0;
     transition: opacity 1s ease-in;
+    padding: var(--space-md);
+    min-height: 100vh;
 }
 
 .show {
-  opacity: 1;
+    opacity: 1;
 }
 
 /* Tile container for password items */
+/* TODO: add per-type tile styling using [data-type="passwords"], [data-type="cards"], [data-type="bank"], [data-type="ids"], [data-type="notes"] selectors (e.g. distinct border-left colors per type) */
 .password-item {
-    background-color: #2c2c2c; /* Dark gray background for tiles */
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); /* Darker shadow */
-    padding: 15px;
-    width: 280px;
-    box-sizing: border-box;
+    background-color: var(--surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow);
+    padding: var(--space-md);
+    width: 100%;
+    min-width: 0;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border-left: 5px solid #4caf50; /* Green accent border */
+    border-left: 5px solid var(--accent);
+    overflow-wrap: anywhere;
 }
 
 /* Tile hover effect */
 .password-item:hover {
     transform: translateY(-5px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6);
+    box-shadow: var(--shadow-strong);
 }
 
 /* Text styling */
 .password-item p {
-    margin: 8px 0;
-    font-size: 14px;
-    font-family: 'Courier New', Courier, monospace; 
-    /* Use "  'Courier New', Courier, monospace  " instead...more code-like in my opinion.....other option is "  "Lucida Console", "Courier New", monospace  " */ 
-    color: #b0b0b0; /* Black text */
+    margin: 0.5rem 0;
+    font-size: var(--font-sm);
+    font-family: 'Courier New', Courier, monospace;
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
 }
 
 .password-item-password {
-    margin: 8px 0;
-    font-size: 14px;
-    font-family: 'Courier New', Courier, monospace; 
-    /* Use "  'Courier New', Courier, monospace  " instead...more code-like in my opinion.....other option is "  "Lucida Console", "Courier New", monospace  " */ 
-    color: #b0b0b0; /* Lighter gray text */
+    margin: 0.5rem 0;
+    font-size: var(--font-sm);
+    font-family: 'Courier New', Courier, monospace;
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
 }
 
 /* Highlight strong labels */
 .password-item p strong {
-    color: #4caf50; /* Green for emphasis */
+    color: var(--accent);
     font-weight: bold;
 }
 
-/* Container for password items */
-#passwordList {
-    display: flex;
-    flex-wrap: wrap; /* Allow wrapping to a new row when no space is left */
-    gap: 20px; /* Spacing between items */
-    width: 100%;
-    justify-content: flex-start; /* Align items to the left */
+/* Action buttons inside each tile */
+.password-item .delete-btn,
+.password-item .copy-btn {
+    font-size: var(--font-lg);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    margin-top: 0.25rem;
 }
 
-/* Responsive design for smaller screens */
-@media (max-width: 768px) {
-    body {
-        flex-direction: column;
-        gap: 15px;
-    }
+.password-item .delete-btn {
+    color: var(--danger);
+}
 
-    .password-item {
-        width: 100%;
-    }
+.password-item .copy-btn {
+    color: var(--text-muted);
+}
+
+/* Container for password items — auto-fitting responsive grid. */
+#passwordList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--tile-min), 1fr));
+    gap: var(--space-md);
+    width: 100%;
+    margin-top: var(--space-md);
+}
+
+#passwordListHeader {
+    font-size: var(--font-xl);
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-sm);
 }
 
 /* Style the form container */
 #passwordForm {
-    background-color: #2c2c2c; /* Dark gray background for the form */
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); /* Darker shadow */
+    background-color: var(--surface);
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow);
     width: 100%;
-    max-width: 400px;
-    margin: auto;
-    margin-top: 20px;
+    max-width: var(--form-max);
+    margin: var(--space-lg) auto 0;
 }
 
 /* Label styling */
 #passwordForm label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 0.35rem;
     font-weight: bold;
-    color: #e0e0e0; /* Light text */
+    color: var(--text);
+    font-size: var(--font-md);
 }
 
 #passwordFormHeader {
-    margin-bottom: 15px;
-    margin-top: 0px;
-    background-color: #1e1e1e;
-    font-size: 20px;
-    color: #e0e0e0;
-    border: 1px solid #4caf50;
-    padding: 1%;
-    border-radius: 5px;
+    margin-bottom: var(--space-md);
+    margin-top: 0;
+    background-color: var(--bg);
+    font-size: var(--font-md);
+    color: var(--text);
+    border: 1px solid var(--accent);
+    padding: 0.625rem 0.75rem;
+    border-radius: var(--radius-sm);
+    width: 100%;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%234caf50' d='M0 0l6 8 6-8z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.25rem;
 }
 
 #passwordFormHeader option {
-    background-color: #1e1e1e;
-    color: #e0e0e0;
-    border: none;
-    padding: 10px;
-    font-size: 16px;
+    background-color: var(--bg);
+    color: var(--text);
+    font-size: var(--font-md);
 }
 
 /* Input field styling */
@@ -117,147 +199,179 @@ body {
 #passwordForm input[type="password"],
 #passwordForm textarea {
     width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #4caf50; /* Green border */
-    background-color: #1e1e1e; /* Dark input background */
-    color: #e0e0e0; /* Light text */
-    border-radius: 4px;
-    font-size: 14px;
-    box-sizing: border-box;
+    padding: 0.625rem;
+    margin-bottom: var(--space-md);
+    border: 1px solid var(--accent);
+    background-color: var(--bg);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-sm);
 }
 
 #passwordForm textarea {
-    resize: vertical; /* Allow vertical resizing */
-    min-height: 60px; /* Minimum height for textarea */
+    resize: vertical;
+    min-height: 4rem;
 }
 
 /* Input hover and focus effects */
 #passwordForm input[type="text"]:focus,
-#passwordForm input[type="password"]:focus {
-    border-color: #81c784; /* Lighter green for focus */
+#passwordForm input[type="password"]:focus,
+#passwordForm textarea:focus {
+    border-color: var(--accent-soft);
     outline: none;
-    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); /* Green glow */
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
 }
 
 /* Button styling */
-#passwordForm button {
+#passwordForm button[type="submit"] {
     width: 100%;
-    padding: 10px;
-    background-color: #4caf50; /* Green button background */
+    padding: 0.625rem;
+    background-color: var(--accent);
     color: white;
     border: none;
-    border-radius: 4px;
-    font-size: 16px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-md);
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
 
-/* Button hover effect */
-#passwordForm button:hover {
-    background-color: #388e3c; /* Darker green on hover */
+#passwordForm button[type="submit"]:hover {
+    background-color: var(--accent-hover);
 }
 
-/* Password logo sizing */
-/* .password-logo {
-    
-} */
+/* Field-level action buttons (eye / generate key) placed inside the label.
+   Sized in em so they scale with the label's font size. */
+.field-action-btn {
+    width: 1.75em;
+    height: 1.75em;
+    background-color: transparent;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    float: right;
+    margin-left: 0.25rem;
+    font-size: 1em;
+    padding: 0;
+}
+
+.field-action-btn:hover {
+    color: var(--accent);
+}
 
 /* Navbar styling */
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 15px;
-    background-color: #2c2c2c; /* Dark gray background for navbar */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); /* Darker shadow */
-    border-radius: 8px;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background-color: var(--surface);
+    box-shadow: var(--shadow);
+    border-radius: var(--radius-md);
+    flex-wrap: wrap;
 }
 
-.navbar-left, .navbar-center, .navbar-right {
+.navbar-left,
+.navbar-center,
+.navbar-right {
     display: flex;
     align-items: center;
 }
 
 .navbar-left {
-    gap: 15px;
+    gap: var(--space-sm);
+    flex-shrink: 0;
 }
 
 .navbar-center {
-    flex-grow: 1;
+    flex: 1 1 240px;
     display: flex;
     justify-content: center;
+    min-width: 0;
 }
 
 .navbar-right {
-    gap: 15px;
+    gap: var(--space-sm);
+    flex-shrink: 0;
 }
 
 /* Logo styling */
 .logo {
-    height: 50px;
+    height: var(--logo-size);
     width: auto;
 }
 
 /* App name styling */
 .app-name {
-    font-size: 24px;
+    font-size: var(--font-xl);
     font-weight: bold;
-    color: #4caf50; /* Green for the app name */
+    color: var(--accent);
+    white-space: nowrap;
 }
 
 /* Search bar styling */
 .search-bar {
     width: 100%;
-    max-width: 400px;
-    padding: 10px;
-    background-color: #1e1e1e;
-    border: 1px solid #4caf50; /* Green border */
-    color: #e0e0e0; /* Light text color */
-    border-radius: 8px;
-    font-size: 14px;
+    max-width: var(--search-max);
+    padding: 0.625rem 0.75rem;
+    background-color: var(--bg);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    border-radius: var(--radius-md);
+    font-size: var(--font-sm);
     transition: border-color 0.3s ease;
-    margin-right: 142px;
 }
 
 /* Search bar focus effect */
 .search-bar:focus {
-    border-color: #81c784; /* Lighter green on focus */
+    border-color: var(--accent-soft);
     outline: none;
 }
 
 /* Settings icon styling */
 .settings-icon {
-    font-size: 24px;
-    color: #e0e0e0;
+    font-size: var(--font-xl);
+    color: var(--text);
     cursor: pointer;
     transition: color 0.3s ease;
 }
 
 /* Settings icon hover effect */
 .settings-icon:hover {
-    color: #4caf50; /* Green hover effect */
+    color: var(--accent);
 }
 
-/* Responsive design for smaller screens */
+/* Responsive design — collapse navbar on narrow windows */
 @media (max-width: 768px) {
     .navbar {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
     }
 
     .navbar-center {
         width: 100%;
+        flex: 1 1 auto;
     }
 
     .search-bar {
-        width: 100%;
-        margin-top: 10px;
+        max-width: none;
     }
 
-    .navbar-left, .navbar-right {
-        justify-content: flex-start;
+    .navbar-left,
+    .navbar-right {
+        justify-content: space-between;
         width: 100%;
+    }
+}
+
+/* On very small windows fall to a single-column tile layout. */
+@media (max-width: 480px) {
+    :root {
+        --tile-min: 100%;
+    }
+
+    body {
+        padding: var(--space-sm);
     }
 }
 
@@ -267,204 +381,285 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-  }
+    gap: var(--space-sm);
+}
 
-  .dropdown-menu {
+.dropdown-menu {
     display: none;
     position: absolute;
     right: 0;
-    top: 40px;
-    background-color: #2c2c2c;
-    color: #e0e0e0;
-    min-width: 150px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    top: calc(100% + 0.5rem);
+    background-color: var(--surface);
+    color: var(--text);
+    min-width: 12rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow);
     z-index: 1;
     overflow: hidden;
-    padding: 8px;
-    padding-top: 12px;
-  }
+    padding: var(--space-sm);
+    font-size: var(--font-sm);
+}
 
-  .dropdown-menu button {
+.dropdown-menu button {
     background: none;
     border: none;
-    color: #e0e0e0;
-    padding: 10px 15px;
+    color: var(--text);
+    padding: 0.625rem 0.9rem;
     text-align: left;
     width: 100%;
     cursor: pointer;
     transition: background-color 0.2s;
-  }
+}
 
-  .dropdown-menu button:hover {
-    background-color: #1e1e1e;
-    color: #e0e0e0;
-  }
+.dropdown-menu button:hover {
+    background-color: var(--surface-hover);
+    color: var(--text);
+}
 
-  /* Show dropdown menu */
-  .dropdown.active .dropdown-menu {
+/* Show dropdown menu */
+.dropdown.active .dropdown-menu {
     display: block;
-  }
+}
 
-  /* Light theme adjustments */
-  .light-mode .dropdown-menu {
-    background-color: #1e1e1e;
-  }
-  
-  .light-mode .dropdown-menu button:hover {
-    background-color: #1e1e1e;
-  }
+/* Light theme adjustments */
+.light-mode .dropdown-menu {
+    background-color: var(--bg);
+}
 
-  .toggle-theme {
+.light-mode .dropdown-menu button:hover {
+    background-color: var(--surface-hover);
+}
+
+/* Each row inside the settings dropdown */
+.menu-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.menu-label {
+    font-size: var(--font-sm);
+    color: var(--text);
+    white-space: nowrap;
+}
+
+/* Toggle switch — used for both theme and visibility toggles */
+.toggle-switch {
     position: relative;
     display: inline-block;
-    width: 50px;
-    height: 24px;
-    margin-right: 15px;
-  }
+    width: 3rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+}
 
 /* Hide default checkbox */
-.toggle-theme input {
+.toggle-switch input {
     opacity: 0;
     width: 0;
     height: 0;
-  }
+}
 
-  /* The track */
-  .slider {
-    margin-left: 10px;
+/* The track */
+.slider {
     position: absolute;
+    inset: 0;
     cursor: pointer;
     background-color: #ccc;
-    border-radius: 24px;
-    width: 100%;
-    height: 100%;
+    border-radius: 1.5rem;
     transition: background-color 0.3s;
-  }
+}
 
-  /* The circular slider */
-  .slider::before {
+/* The circular knob */
+.slider::before {
     content: "";
     position: absolute;
-    height: 20px;
-    width: 20px;
-    left: 4px;
-    bottom: 2px;
-    background-color: #1e1e1e;
+    height: 1.125rem;
+    width: 1.125rem;
+    left: 0.25rem;
+    bottom: 0.1875rem;
+    background-color: var(--bg);
     border-radius: 50%;
     transition: transform 0.3s;
-  }
+}
 
-  /* Toggled state */
-  .toggle-theme input:checked+.slider {
-    background-color: #4caf50;
-  }
+/* Toggled state */
+.toggle-switch input:checked + .slider {
+    background-color: var(--accent);
+}
 
-  .toggle-theme input:checked+.slider::before {
-    transform: translateX(22px);
-  }
+.toggle-switch input:checked + .slider::before {
+    transform: translateX(1.375rem);
+}
 
-  .toggle-visibility {
-    position: relative;
-    display: inline-block;
-    width: 50px;
-    height: 24px;
-    margin-top: 8px;
-    margin-left: 40px;
-  }
-
-  /* Hide default checkbox */
-  .toggle-visibility input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-
-  /* Toggled state */
-  .toggle-visibility input:checked+.slider {
-    background-color: #4caf50;
-  }
-
-  .toggle-visibility input:checked+.slider::before {
-    transform: translateX(22px);
-  }
-
-  #searchByWhat {
-    background-color: #2c2c2c; /* Matches navbar background */
-    color: #e0e0e0; /* Light text color */
-    border: 1px solid #4caf50; /* Green border for contrast */
-    border-radius: 4px;
-    padding: 8px 12px;
-    font-size: 14px;
-    margin-right: 20px; /* Space between search bar and select */
+#searchByWhat {
+    background-color: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.75rem;
+    font-size: var(--font-sm);
+    margin-right: var(--space-md);
     cursor: pointer;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  }
+}
 
-  /* Hover effect for the select element */
-  #searchByWhat:hover {
-    border-color: #81c784; /* Lighter green on hover */
-  }
+#searchByWhat:hover {
+    border-color: var(--accent-soft);
+}
 
-  /* Focus effect for the select element */
-  #searchByWhat:focus {
+#searchByWhat:focus {
     outline: none;
-    box-shadow: 0 0 5px rgba(129, 199, 132, 0.5); /* Subtle green glow */
-  }
+    box-shadow: 0 0 5px rgba(129, 199, 132, 0.5);
+}
 
-  /* Option styling */
-  #searchByWhat option {
-    background-color: #2c2c2c; /* Matches the select background */
-    color: #e0e0e0;
-  }
+#searchByWhat option {
+    background-color: var(--surface);
+    color: var(--text);
+}
 
-  /* Option hover styling */
-  #searchByWhat option:hover {
-    background-color: #81c784; /* Matches the select background */
-  }
+#searchByWhat option:hover {
+    background-color: var(--accent-soft);
+}
 
-  /* Self-Destruct Button Styling */
-  #self-destruct {
-    background-color: #d32f2f; /* Red background for danger */
-    text-align: center;
-    color: #ffffff; /* White text for contrast */
+/* Self-Destruct Button Styling */
+#self-destruct,
+.self-destruct-button {
+    background-color: var(--danger);
+    color: #ffffff;
     border: none;
-    padding: 10px 32px;
-    text-align: left;
+    padding: 0.625rem 1rem;
+    text-align: center;
     width: 100%;
     cursor: pointer;
     font-weight: bold;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
+    margin-top: var(--space-sm);
+    font-size: var(--font-sm);
     transition: background-color 0.3s ease, transform 0.2s ease;
-  }
-
-  /* Hover effect for Self-Destruct Button */
-.self-destruct-button:hover {
-  background-color: #b71c1c; /* Darker red on hover */
-  transform: scale(1.05); /* Slight zoom effect */
 }
 
-/* Active/Pressed effect for Self-Destruct Button */
+.self-destruct-button:hover {
+    background-color: var(--danger-hover);
+    transform: scale(1.05);
+}
+
 .self-destruct-button:active {
-  background-color: #9a0007; /* Even darker red on click */
-  transform: scale(0.95); /* Slight shrink effect */
+    background-color: var(--danger-active);
+    transform: scale(0.95);
 }
 
 #num-entries strong {
-  color: #4caf50; /* Green for emphasis */
-  font-weight: bold;
+    color: var(--accent);
+    font-weight: bold;
 }
 
 #num-entries {
-  padding-left: 18px;
+    padding-left: 0.5rem;
+    font-size: var(--font-sm);
 }
 
 .fa {
-  background: lightgray;
-  transition: background-color 0.5s ease;
+    transition: background-color 0.5s ease;
 }
 
-.fa:hover {
-  background-color: darkgray;
+/* ── Filter bar ─────────────────────────────────────────────────────────── */
+
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin: var(--space-lg) 0 var(--space-sm);
+    align-items: center;
+}
+
+.filter-btn {
+    padding: 0.35rem 0.9rem;
+    border: 1px solid var(--accent);
+    border-radius: 2rem;
+    background: transparent;
+    color: var(--text);
+    font-size: var(--font-sm);
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+    white-space: nowrap;
+}
+
+.filter-btn:hover {
+    background: var(--surface);
+}
+
+.filter-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+/* ── Confirm modal ──────────────────────────────────────────────────────── */
+
+.confirm-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+}
+
+.confirm-modal.active {
+    display: flex;
+}
+
+.confirm-dialog {
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    padding: var(--space-xl);
+    max-width: 28rem;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.confirm-message {
+    margin: 0 0 var(--space-lg);
+    font-size: var(--font-md);
+    color: var(--text);
+    line-height: 1.6;
+}
+
+.confirm-actions {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: flex-end;
+}
+
+.confirm-no-btn {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--text-muted);
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-sm);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.confirm-no-btn:hover {
+    background: var(--bg);
+}
+
+.confirm-yes-btn {
+    background: var(--danger);
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-sm);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.confirm-yes-btn:hover {
+    background: var(--danger-hover);
 }

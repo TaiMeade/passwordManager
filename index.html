@@ -5,70 +5,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Vault</title>
   <link rel="stylesheet" href="style.css" id="theme-link">
+  <link rel="stylesheet" href="./node_modules/toastify-js/src/toastify.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <script src="./node_modules/toastify-js/src/toastify.js"></script>
+  <script src="./node_modules/imask/dist/imask.js"></script>
   <script>
     window.addEventListener('load', function() {
       document.body.classList.add('show');
-    })
-
+    });
     window.addEventListener('beforeunload', function() {
-      navigator.clipboard.writeText(" "); // seems to only sometimes work as of now...not sure what the exact pattern going on is though
-    })
+      navigator.clipboard.writeText(" ");
+    });
   </script>
 </head>
 <body>
+
+  <!-- Confirm modal (replaces window.confirm for self-destruct) -->
+  <div id="confirm-modal" class="confirm-modal">
+    <div class="confirm-dialog">
+      <p class="confirm-message" id="confirm-message"></p>
+      <div class="confirm-actions">
+        <button id="confirm-no" class="confirm-no-btn">Cancel</button>
+        <button id="confirm-yes" class="confirm-yes-btn">Delete All</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Navbar -->
   <nav class="navbar">
     <div class="navbar-left">
-        <!-- Logo -->
-        <img src="./images/logo.png" alt="Logo" class="logo">
-        <!-- App Name -->
-        <span class="app-name">The Vault</span>
+      <img src="./images/logo.png" alt="Logo" class="logo">
+      <span class="app-name">The Vault</span>
     </div>
     <div class="navbar-center">
-        <!-- Search Bar -->
-         <!-- This select element is no longer needed thanks to the new method of searching...get all results and then filter using Javascript -->
-         <!-- <select id="searchByWhat">
-          <option value="serviceIDX">Service</option>
-          <option value="emailIDX">Email</option>
-          <option value="usernameIDX">Username</option>
-         </select> -->
-         <input type="text" id="search-bar" class="search-bar" placeholder="Search...">
+      <input type="text" id="search-bar" class="search-bar" placeholder="Search...">
     </div>
     <div class="navbar-right">
-        <!-- Dropdown Menu -->
-        <div class="dropdown">
-          <i class="settings-icon fas fa-cogs"></i>
-          <div class="dropdown-menu">
-            Light Mode
-            <!-- Toggle switch -->
-            <label class="toggle-theme">
+      <div class="dropdown">
+        <i class="settings-icon fas fa-cogs"></i>
+        <div class="dropdown-menu">
+          <div class="menu-row">
+            <span class="menu-label">Light Mode</span>
+            <label class="toggle-switch">
               <input type="checkbox" id="toggle-theme"/>
               <span class="slider"></span>
             </label>
-            <br>
-            Show
-              <!-- Toggle Switch for Passwords -->
-            <label class="toggle-visibility">
+          </div>
+          <div class="menu-row">
+            <span class="menu-label">Show Passwords</span>
+            <label class="toggle-switch">
               <input type="checkbox" id="toggle-visibility"/>
               <span class="slider"></span>
             </label>
-            <p id="num-entries"></p>
-            <button id="self-destruct" class="self-destruct-button">Self-Destruct</button>
           </div>
+          <p id="num-entries"></p>
+          <button id="self-destruct" class="self-destruct-button">Self-Destruct</button>
         </div>
+      </div>
     </div>
   </nav>
 
-  <!-- Creating a new password/item combo form -->
+  <!-- Entry type form -->
   <form id="passwordForm">
     <select id="passwordFormHeader">
-      <option value="Password">Password:</option>
-      <option value="Card">Credit/Debit Card:</option>
-      <option value="Bank">Bank Account:</option>
-      <option value="ID">ID Numbers:</option>
-      <option value="Note">Notes:</option>
+      <option value="Password">Password</option>
+      <option value="Card">Credit / Debit Card</option>
+      <option value="Bank">Bank Account</option>
+      <option value="ID">ID Numbers</option>
+      <option value="Note">Note</option>
     </select>
 
     <div id="formFields">
@@ -80,27 +85,28 @@
       <input maxlength="30" type="text" id="username" required />
       <label for="password">
         Password:
-        <button id="toggle-password" type="button" class="fas fa-eye" style="width:10%;height:10%; background-color: rgba(0, 0, 0, 0); float:right; padding-top: 5px;"></button>
-        <button id="generate-password" type="button" class="fas fa-key" style="width:10%;height:10%; background-color: rgba(0, 0, 0, 0); float:right; padding-top: 5px;"></button>
+        <button id="toggle-password" type="button" class="fas fa-eye field-action-btn"></button>
+        <button id="generate-password" type="button" class="fas fa-key field-action-btn"></button>
       </label>
       <input maxlength="30" type="password" id="password" required />
     </div>
     <button type="submit">Save</button>
   </form>
 
-  <!-- Saved Password list -->
-  <h2 id="passwordListHeader">Saved Items</h2>
-  <div id="passwordList">
-    <!-- Saved passwords will be displayed here --> 
-    <script src="renderer.js"></script>
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="passwords">Passwords</button>
+    <button class="filter-btn" data-filter="cards">Cards</button>
+    <button class="filter-btn" data-filter="bank">Bank</button>
+    <button class="filter-btn" data-filter="ids">IDs</button>
+    <button class="filter-btn" data-filter="notes">Notes</button>
   </div>
 
-  <!-- <div class="buttons">
-    <input type="text" id="passwordInput">
-    <button id="encryptBtn">Encrypt</button>
-    <button id="decryptBtn">Decrypt</button>
-    <p id="output">Nothing yet!</p>
-  </div> -->
+  <!-- Saved items list -->
+  <div id="passwordList">
+    <script src="renderer.js"></script>
+  </div>
 
 </body>
 </html>

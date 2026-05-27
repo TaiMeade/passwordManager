@@ -1,1062 +1,633 @@
 window.currentVersion = 1;
 
-// Generate a random password of a provided length
-function generatePassword(length) {
-  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
-  let password = "";
-  for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * charset.length);
-      password += charset[randomIndex];
+// ── Toast helper ─────────────────────────────────────────────────────────────
+
+function showToast(message, type = 'info', icon = null) {
+  const bg = {
+    success: 'linear-gradient(to right, #388e3c, #4caf50)',
+    error:   'linear-gradient(to right, #c62828, #e53935)',
+    warning: 'linear-gradient(to right, #e65100, #fb8c00)',
+    info:    'linear-gradient(to right, #1565c0, #1976d2)',
+  };
+
+  const opts = {
+    duration: 3500,
+    gravity: 'bottom',
+    position: 'right',
+    stopOnFocus: true,
+    style: { background: bg[type] || bg.info, borderRadius: '6px' },
+  };
+
+  if (icon) {
+    // Use a DOM node so Font Awesome renders properly inside the toast.
+    const node = document.createElement('div');
+    node.style.cssText = 'display:flex;align-items:center;gap:0.5rem;';
+    node.innerHTML = `<i class="${icon}" aria-hidden="true" style="font-size:1.1em;flex-shrink:0;"></i><span>${message}</span>`;
+    opts.node = node;
+  } else {
+    opts.text = message;
   }
-  return password;
+
+  Toastify(opts).showToast();
 }
 
-// dynamically change the form fields based on the selected option in the dropdown
+// ── Confirm modal (replaces window.confirm) ───────────────────────────────────
+
+function showConfirm(message) {
+  return new Promise((resolve) => {
+    document.getElementById('confirm-message').textContent = message;
+    const modal = document.getElementById('confirm-modal');
+    modal.classList.add('active');
+
+    function finish(result) {
+      modal.classList.remove('active');
+      resolve(result);
+    }
+
+    document.getElementById('confirm-yes').addEventListener('click', () => finish(true),  { once: true });
+    document.getElementById('confirm-no').addEventListener('click',  () => finish(false), { once: true });
+  });
+}
+
+// ── IMask instances ───────────────────────────────────────────────────────────
+
+let activeMasks = [];
+
+function applyMasks(selectedOption) {
+  activeMasks.forEach((m) => m.destroy());
+  activeMasks = [];
+
+  if (selectedOption === 'Card') {
+    activeMasks = [
+      IMask(document.getElementById('cardnumber'), { mask: '0000 0000 0000 0000' }),
+      IMask(document.getElementById('expirydate'), {
+        mask: 'MM/YY',
+        blocks: {
+          MM: { mask: IMask.MaskedRange, from: 1,  to: 12, maxLength: 2 },
+          YY: { mask: IMask.MaskedRange, from: 0,  to: 99, maxLength: 2 },
+        },
+      }),
+      IMask(document.getElementById('cvv'), { mask: /^[0-9]{0,4}$/ }),
+    ];
+  } else if (selectedOption === 'Bank') {
+    activeMasks = [
+      IMask(document.getElementById('routing'), { mask: /^[0-9]{0,9}$/ }),
+    ];
+  }
+}
+
+// ── Filter ────────────────────────────────────────────────────────────────────
+
+function applyCurrentFilter() {
+  const activeBtn = document.querySelector('.filter-btn.active');
+  const filter = activeBtn ? activeBtn.getAttribute('data-filter') : 'all';
+  document.querySelectorAll('#passwordList .password-item').forEach((item) => {
+    const type = item.getAttribute('data-type');
+    item.style.display = (filter === 'all' || type === filter) ? '' : 'none';
+  });
+}
+
+// ── Password generation ───────────────────────────────────────────────────────
+
+function generatePassword(length) {
+  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=';
+  let pw = '';
+  for (let i = 0; i < length; i++) pw += charset[Math.floor(Math.random() * charset.length)];
+  return pw;
+}
+
+// ── Refresh all lists ─────────────────────────────────────────────────────────
+
+const ENTRY_STORES = ['passwords', 'cards', 'bankAccounts', 'ids', 'notes'];
+
+function refreshAllLists() {
+  // Clear once here so individual display functions only append.
+  document.getElementById('passwordList').innerHTML = '';
+  displaySavedPasswords();
+  displaySavedCards();
+  displaySavedBankAccounts();
+  displaySavedIDs();
+  displaySavedNotes();
+}
+
+// ── Form type switching ───────────────────────────────────────────────────────
+
 document.getElementById('passwordFormHeader').addEventListener('change', (e) => {
-  const selectedOption = e.target.value;
+  const sel = e.target.value;
 
-  // handle changing the form fields based on the selected option
-  if (selectedOption === "Password") {
-    document.getElementById('formFields').innerHTML = `<label for="service">Service:</label>
-                                                       <input maxlength="30" type="text" id="service" required />
-                                                       <label for="email">Email:</label>
-                                                       <input maxlength="30" type="text" id="email" required />
-                                                       <label for="username">Username:</label>
-                                                       <input maxlength="30" type="text" id="username" required />
-                                                       <label for="password">Password:
-                                                       <button id="toggle-password" type="button" class="fas fa-eye" style="width:10%;height:10%; background-color: rgba(0, 0, 0, 0); float:right; padding-top: 5px;"></button>
-                                                       <button id="generate-password" type="button" class="fas fa-key" style="width:10%;height:10%; background-color: rgba(0, 0, 0, 0); float:right; padding-top: 5px;"></button>
-                                                       </label>  
-                                                       <input maxlength="30" type="password" id="password" required />`;
+  if (sel === 'Password') {
+    document.getElementById('formFields').innerHTML = `
+      <label for="service">Service:</label>
+      <input maxlength="30" type="text" id="service" required />
+      <label for="email">Email:</label>
+      <input maxlength="30" type="text" id="email" required />
+      <label for="username">Username:</label>
+      <input maxlength="30" type="text" id="username" required />
+      <label for="password">Password:
+        <button id="toggle-password" type="button" class="fas fa-eye field-action-btn"></button>
+        <button id="generate-password" type="button" class="fas fa-key field-action-btn"></button>
+      </label>
+      <input maxlength="30" type="password" id="password" required />`;
+    wirePasswordFieldButtons();
 
-    document.getElementById('generate-password').addEventListener('click', () => {
-      passwordField.value = generatePassword(16); // Generate a 16-character password
+  } else if (sel === 'Card') {
+    document.getElementById('formFields').innerHTML = `
+      <label for="cardholder">Cardholder:</label>
+      <input maxlength="30" type="text" id="cardholder" required />
+      <label for="cardnumber">Card Number:</label>
+      <input maxlength="19" type="text" id="cardnumber" placeholder="0000 0000 0000 0000" required />
+      <label for="expirydate">Expiry Date:</label>
+      <input type="text" id="expirydate" placeholder="MM/YY" required />
+      <label for="cvv">CVV:</label>
+      <input maxlength="4" type="password" id="cvv" required />`;
+
+  } else if (sel === 'Bank') {
+    document.getElementById('formFields').innerHTML = `
+      <label for="bank">Bank / Financial Institution:</label>
+      <input maxlength="30" type="text" id="bank" required />
+      <label for="routing">Routing Number:</label>
+      <input maxlength="9" type="text" id="routing" required />
+      <label for="account">Account Number:</label>
+      <input type="password" id="account" required />`;
+
+  } else if (sel === 'ID') {
+    document.getElementById('formFields').innerHTML = `
+      <label for="idType">ID Type (Driver's License, Passport, etc.):</label>
+      <input maxlength="30" type="text" id="idType" required />
+      <label for="idNumber">ID Number:</label>
+      <input maxlength="30" type="text" id="idNumber" required />`;
+
+  } else if (sel === 'Note') {
+    document.getElementById('formFields').innerHTML = `
+      <label for="noteTitle">Title:</label>
+      <input maxlength="30" type="text" id="noteTitle" required />
+      <label for="noteContent">Content:</label>
+      <textarea id="noteContent" rows="6" required></textarea>`;
+  }
+
+  applyMasks(sel);
+});
+
+// ── Wire eye / generate buttons (shared between initial load and form rebuild) ─
+
+function wirePasswordFieldButtons() {
+  const pwField  = document.getElementById('password');
+  const toggleBtn = document.getElementById('toggle-password');
+  const genBtn    = document.getElementById('generate-password');
+
+  genBtn.addEventListener('click', () => { pwField.value = generatePassword(16); });
+
+  toggleBtn.addEventListener('click', () => {
+    if (pwField.type === 'password') {
+      pwField.type = 'text';
+      toggleBtn.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+      pwField.type = 'password';
+      toggleBtn.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+  });
+}
+
+// Wire on initial page load (Password form is pre-rendered in HTML).
+document.addEventListener('DOMContentLoaded', () => {
+  wirePasswordFieldButtons();
+  refreshAllLists();
+});
+
+// ── Form submit ───────────────────────────────────────────────────────────────
+
+document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const formType = document.getElementById('passwordFormHeader').value;
+
+  if (formType === 'Password') {
+    const service  = document.getElementById('service').value.trim();
+    const email    = document.getElementById('email').value.trim();
+    const username = document.getElementById('username').value.trim();
+    const rawPw    = document.getElementById('password').value.trim();
+
+    if (!service || !email || !username || !rawPw) { showToast('Please fill in all fields.', 'warning'); return; }
+    if (!/.+@.+/.test(email)) { showToast('Invalid email address.', 'warning'); return; }
+
+    const password = await window.electronAPI.encrypt(rawPw);
+    openDB((db) => {
+      const tx = db.transaction('passwords', 'readwrite');
+      tx.objectStore('passwords').put({ service, email, username, password });
+      tx.oncomplete = () => { clearFormFields(); refreshAllLists(); showToast('Password saved!', 'success', 'fas fa-key'); };
+      tx.onerror = (err) => { console.error(err); showToast('Failed to save entry.', 'error'); };
     });
-  } else if (selectedOption === "Card") {
-    document.getElementById('formFields').innerHTML = `<label for="cardholder">Cardholder:</label>
-                                                       <input maxlength="30" type="text" id="cardholder" required />
-                                                       <label for="cardnumber">Card Number:</label>
-                                                       <input maxlength="19" type="text" id="cardnumber" required />
-                                                       <label for="expirydate">Expiry Date:</label>
-                                                       <input maxlength="5" type="text" id="expirydate" placeholder="MM/YY" required />
-                                                       <label for="cvv">CVV:</label>
-                                                       <input maxlength="4" type="password" id="cvv" required />`
-  } else if (selectedOption === "Bank") {
-    document.getElementById('formFields').innerHTML = `<label for="bank">Bank/Financial Institution:</label>
-                                                       <input maxlength="30" type="text" id="bank" required />
-                                                       <label for="routing">Routing Number:</label>
-                                                       <input type="text" id="routing" required></input>
-                                                       <label for="account">Account Number:</label>
-                                                       <input type="password" id="account" required></input>`;
-  } else if (selectedOption === "ID") {
-    document.getElementById('formFields').innerHTML = `<label for="idType">ID Type (Driver's License, Passport, etc.):</label>
-                                                       <input maxlength="30" type="text" id="idType" required />
-                                                       <label for="idNumber">ID Number:</label>
-                                                       <input maxlength="30" type="text" id="idNumber" required />`;
-  } else if (selectedOption === "Note") {
-    document.getElementById('formFields').innerHTML = `<label for="noteTitle">Title:</label>
-                                                       <input maxlength="30" type="text" id="noteTitle" required />
-                                                       <label for="noteContent">Content:</label>
-                                                       <textarea id="noteContent" rows="10" cols="50" required></textarea>`;
+
+  } else if (formType === 'Card') {
+    const cardholder = document.getElementById('cardholder').value.trim();
+    const cardnumber = document.getElementById('cardnumber').value.replace(/\s/g, '');
+    const expirydate = document.getElementById('expirydate').value.trim();
+    const rawCVV     = document.getElementById('cvv').value.trim();
+
+    if (!cardholder || !cardnumber || !expirydate || !rawCVV) { showToast('Please fill in all fields.', 'warning'); return; }
+
+    const cvv = await window.electronAPI.encrypt(rawCVV);
+    openDB((db) => {
+      const tx = db.transaction('cards', 'readwrite');
+      tx.objectStore('cards').put({ cardholder, cardnumber, expirydate, cvv });
+      tx.oncomplete = () => { clearFormFields(); refreshAllLists(); showToast('Card saved!', 'success', 'fas fa-credit-card'); };
+      tx.onerror = (err) => { console.error(err); showToast('Failed to save entry.', 'error'); };
+    });
+
+  } else if (formType === 'Bank') {
+    const bank    = document.getElementById('bank').value.trim();
+    const routing = document.getElementById('routing').value.trim();
+    const rawAcct = document.getElementById('account').value.trim();
+
+    if (!bank || !routing || !rawAcct) { showToast('Please fill in all fields.', 'warning'); return; }
+
+    const account = await window.electronAPI.encrypt(rawAcct);
+    openDB((db) => {
+      const tx = db.transaction('bankAccounts', 'readwrite');
+      tx.objectStore('bankAccounts').put({ bank, routing, account });
+      tx.oncomplete = () => { clearFormFields(); refreshAllLists(); showToast('Bank account saved!', 'success', 'fas fa-university'); };
+      tx.onerror = (err) => { console.error(err); showToast('Failed to save entry.', 'error'); };
+    });
+
+  } else if (formType === 'ID') {
+    const idType   = document.getElementById('idType').value.trim();
+    const idNumber = document.getElementById('idNumber').value.trim();
+
+    if (!idType || !idNumber) { showToast('Please fill in all fields.', 'warning'); return; }
+
+    const encryptedIdNumber = await window.electronAPI.encrypt(idNumber);
+    openDB((db) => {
+      const tx = db.transaction('ids', 'readwrite');
+      tx.objectStore('ids').put({ idType, encryptedIdNumber });
+      tx.oncomplete = () => { clearFormFields(); refreshAllLists(); showToast('ID saved!', 'success', 'fas fa-id-card'); };
+      tx.onerror = (err) => { console.error(err); showToast('Failed to save entry.', 'error'); };
+    });
+
+  } else if (formType === 'Note') {
+    const noteTitle   = document.getElementById('noteTitle').value.trim();
+    const rawContent  = document.getElementById('noteContent').value.trim();
+
+    if (!noteTitle || !rawContent) { showToast('Please fill in all fields.', 'warning'); return; }
+
+    const noteContent = await window.electronAPI.encrypt(rawContent);
+    openDB((db) => {
+      const tx = db.transaction('notes', 'readwrite');
+      tx.objectStore('notes').put({ noteTitle, noteContent });
+      tx.oncomplete = () => { clearFormFields(); refreshAllLists(); showToast('Note saved!', 'success', 'fas fa-sticky-note'); };
+      tx.onerror = (err) => { console.error(err); showToast('Failed to save entry.', 'error'); };
+    });
   }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-    displaySavedPasswords(); // Display saved passwords when the page loads
-    displaySavedCards(); // Display saved cards when the page loads
-    displaySavedBankAccounts(); // Display saved bank accounts when the page loads
-    displaySavedIDs(); // Display saved IDs when the page loads
-    displaySavedNotes(); // Display saved notes when the page loads
-  });
-  
-  const passwordField = document.getElementById('password');
-  const togglePassword = document.getElementById('toggle-password');
+// ── DB helper ─────────────────────────────────────────────────────────────────
 
-  document.getElementById('generate-password').addEventListener('click', () => {
-    passwordField.value = generatePassword(16); // Generate a 16-character password
-  });
-
-  togglePassword.addEventListener('click', () => {
-    if (passwordField.type === "password") {
-      passwordField.type = "text";
-      togglePassword.classList.remove("fa-eye");
-      togglePassword.classList.add("fa-eye-slash");
-    }
-    else {
-      passwordField.type = "password";
-      togglePassword.classList.remove("fa-eye-slash");
-      togglePassword.classList.add("fa-eye");
-    }
-  });
-
-  document.getElementById('passwordForm').addEventListener('submit', async (e) => {
-    e.preventDefault(); // Prevent form from refreshing the page
-
-    // handle saving the password entry to IndexedDB
-    if (document.getElementById('passwordFormHeader').value === "Password") {
-      const service = document.getElementById('service').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const username = document.getElementById('username').value.trim();
-      const password = await window.electronAPI.encrypt(document.getElementById('password').value.trim());
-
-      if (!service || !email || !username || !password) {
-        alert('Please fill in all fields.');
-        return;
-      }
-
-      if (!/.+@.+/.test(email)) {
-        alert("Invalid Email.")
-        return
-      }
-  
-      const dbRequest = indexedDB.open('PasswordManager', currentVersion);
-    
-      dbRequest.onsuccess = (event) => {
-        const db = event.target.result;
-        const transaction = db.transaction('passwords', 'readwrite');
-        const store = transaction.objectStore('passwords');
-        store.put({ service, email, username, password });
-
-        transaction.oncomplete = () => {
-        // alert('Password saved successfully!');
-
-        // Clear form fields
-        clearFormFields();
-
-        // Refresh the password list
-        displaySavedPasswords();
-        displaySavedCards();
-        displaySavedBankAccounts(); 
-        displaySavedIDs();
-        displaySavedNotes();
-        };
-
-        transaction.onerror = (err) => {
-          console.error('Error saving password:', err);
-          alert('Failed to save password. Please try again.');
-        };
-      };
-      
-      dbRequest.onerror = (err) => {
-        console.error('Database error:', err);
-        alert('Failed to open the database. Please try again.');
-      };
-    }
-    
-    // handle saving the card entry to IndexedDB
-    else if (document.getElementById('passwordFormHeader').value === "Card") {
-      const cardholder = document.getElementById('cardholder').value.trim();
-      const cardnumber = document.getElementById('cardnumber').value.trim(); // repurposed field
-      const expirydate = document.getElementById('expirydate').value.trim(); // repurposed field
-      const cvv = await window.electronAPI.encrypt(document.getElementById('cvv').value.trim()); // repurposed field
-
-      if (!cardholder || !cardnumber || !expirydate || !cvv) {
-        alert('Please fill in all fields.');
-        return;
-      }
-  
-      const dbRequest = indexedDB.open('PasswordManager', currentVersion);
-    
-      dbRequest.onsuccess = (event) => {
-        const db = event.target.result;
-        const transaction = db.transaction('cards', 'readwrite');
-        const store = transaction.objectStore('cards');
-        store.put({ cardholder, cardnumber, expirydate, cvv });
-
-        transaction.oncomplete = () => {
-        // alert('Password saved successfully!');
-
-        // Clear form fields
-        clearFormFields();
-
-        // Refresh the password list
-        displaySavedPasswords();
-        displaySavedCards();
-        displaySavedBankAccounts(); 
-        displaySavedIDs(); 
-        displaySavedNotes(); 
-        };
-
-        transaction.onerror = (err) => {
-          console.error('Error saving password:', err);
-          alert('Failed to save password. Please try again.');
-        };
-      };
-      
-      dbRequest.onerror = (err) => {
-        console.error('Database error:', err);
-        alert('Failed to open the database. Please try again.');
-      };
-    } 
-    
-    // handle saving the bank entry to IndexedDB
-    else if (document.getElementById('passwordFormHeader').value === "Bank") {
-      const bank = document.getElementById('bank').value.trim();
-      const routing = document.getElementById('routing').value.trim(); 
-      const account = await window.electronAPI.encrypt(document.getElementById('account').value.trim());
-
-      if (!bank || !routing || !account) {
-        alert('Please fill in all fields.');
-        return;
-      }
-  
-      const dbRequest = indexedDB.open('PasswordManager', currentVersion);
-    
-      dbRequest.onsuccess = (event) => {
-        const db = event.target.result;
-        const transaction = db.transaction('bankAccounts', 'readwrite');
-        const store = transaction.objectStore('bankAccounts');
-        store.put({ bank, routing, account });
-
-        transaction.oncomplete = () => {
-        // alert('Password saved successfully!');
-
-        // Clear form fields
-        clearFormFields();
-
-        // Refresh the password list
-        displaySavedPasswords();
-        displaySavedCards();
-        displaySavedBankAccounts(); 
-        displaySavedIDs(); 
-        displaySavedNotes(); 
-        };
-
-        transaction.onerror = (err) => {
-          console.error('Error saving password:', err);
-          alert('Failed to save password. Please try again.');
-        };
-      };
-      
-      dbRequest.onerror = (err) => {
-        console.error('Database error:', err);
-        alert('Failed to open the database. Please try again.');
-      };
-    }
-
-    // handle saving the ID entry to IndexedDB
-    else if (document.getElementById('passwordFormHeader').value === "ID") {
-      const idType = document.getElementById('idType').value.trim();
-      const idNumber = document.getElementById('idNumber').value.trim();
-      const encryptedIdNumber = await window.electronAPI.encrypt(idNumber);
-
-      if (!idType || !idNumber) {
-        alert('Please fill in all fields.');
-        return;
-      }
-  
-      const dbRequest = indexedDB.open('PasswordManager', currentVersion);
-    
-      dbRequest.onsuccess = (event) => {
-        const db = event.target.result;
-        const transaction = db.transaction('ids', 'readwrite');
-        const store = transaction.objectStore('ids');
-        store.put({ idType, encryptedIdNumber });
-
-        transaction.oncomplete = () => {
-        // alert('Password saved successfully!');
-
-        // Clear form fields
-        clearFormFields();
-
-        // Refresh the password list
-        displaySavedPasswords();
-        displaySavedCards();
-        displaySavedBankAccounts(); 
-        displaySavedIDs(); 
-        displaySavedNotes(); 
-        };
-
-        transaction.onerror = (err) => {
-          console.error('Error saving password:', err);
-          alert('Failed to save password. Please try again.');
-        };
-      };
-      
-      dbRequest.onerror = (err) => {
-        console.error('Database error:', err);
-        alert('Failed to open the database. Please try again.');
-      };
-    } 
-    
-    // handle saving the note entry to IndexedDB
-    else if (document.getElementById('passwordFormHeader').value === "Note") {
-      const noteTitle = document.getElementById('noteTitle').value.trim();
-      const noteContent = await window.electronAPI.encrypt(document.getElementById('noteContent').value.trim());
-
-      if (!noteTitle || !noteContent) {
-        alert('Please fill in all fields.');
-        return;
-      }
-  
-      const dbRequest = indexedDB.open('PasswordManager', currentVersion);
-    
-      dbRequest.onsuccess = (event) => {
-        const db = event.target.result;
-        const transaction = db.transaction('notes', 'readwrite');
-        const store = transaction.objectStore('notes');
-        store.put({ noteTitle, noteContent });
-
-        transaction.oncomplete = () => {
-        // alert('Password saved successfully!');
-
-        // Clear form fields
-        clearFormFields();
-
-        // Refresh the password list
-        displaySavedPasswords();
-        displaySavedCards();
-        displaySavedBankAccounts(); 
-        displaySavedIDs(); 
-        displaySavedNotes();
-        };
-
-        transaction.onerror = (err) => {
-          console.error('Error saving password:', err);
-          alert('Failed to save password. Please try again.');
-        };
-      };
-      
-      dbRequest.onerror = (err) => {
-        console.error('Database error:', err);
-        alert('Failed to open the database. Please try again.');
-      };
-    }
-  });
-  
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // ----------------------------------------------------------- Clear Form Fields ------------------------------------------------------------------------------------------------
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-  function clearFormFields() {
-    // Clear and explicitly re-enable the input fields
-    if (document.getElementById('passwordFormHeader').value === "Password") {
-      const serviceField = document.getElementById('service');
-      const emailField = document.getElementById('email');
-      const usernameField = document.getElementById('username');
-      const passwordField = document.getElementById('password');
-    
-      serviceField.value = '';
-      emailField.value = '';
-      usernameField.value = '';
-      passwordField.value = '';
-
-    
-      serviceField.disabled = false;
-      emailField.disabled = false;
-      usernameField.disabled = false;
-      passwordField.disabled = false;
-
-      // Set serviceField (first input) as the active input...makes easier to input many passwords at once
-      serviceField.focus();
-    } else if (document.getElementById('passwordFormHeader').value === "Card") {
-      const cardholderField = document.getElementById('cardholder');
-      const cardnumberField = document.getElementById('cardnumber');
-      const expirydateField = document.getElementById('expirydate');
-      const cvvField = document.getElementById('cvv');
-    
-      cardholderField.value = '';
-      cardnumberField.value = '';
-      expirydateField.value = '';
-      cvvField.value = '';
-
-    
-      cardholderField.disabled = false;
-      cardnumberField.disabled = false;
-      expirydateField.disabled = false;
-      cvvField.disabled = false;
-
-      // Set cardholderField (first input) as the active input...makes easier to input many cards at once
-      cardholderField.focus();
-    } else if (document.getElementById('passwordFormHeader').value === "Bank") {
-      const bankField = document.getElementById('bank');
-      const routingField = document.getElementById('routing');
-      const accountField = document.getElementById('account');
-    
-      bankField.value = '';
-      routingField.value = '';
-      accountField.value = '';
-
-    
-      bankField.disabled = false;
-      routingField.disabled = false;
-      accountField.disabled = false;
-
-      // Set bankField (first input) as the active input...makes easier to input many banks at once
-      bankField.focus();
-    } else if (document.getElementById('passwordFormHeader').value === "ID") {  
-      const idTypeField = document.getElementById('idType');
-      const idNumberField = document.getElementById('idNumber');
-    
-      idTypeField.value = '';
-      idNumberField.value = '';
-
-    
-      idTypeField.disabled = false;
-      idNumberField.disabled = false;
-
-      // Set idTypeField (first input) as the active input...makes easier to input many IDs at once
-      idTypeField.focus();
-    } else if (document.getElementById('passwordFormHeader').value === "Note") {  
-      const noteTitleField = document.getElementById('noteTitle');
-      const noteContentField = document.getElementById('noteContent');
-    
-      noteTitleField.value = '';
-      noteContentField.value = '';
-
-    
-      noteTitleField.disabled = false;
-      noteContentField.disabled = false;
-
-      // Set noteTitleField (first input) as the active input...makes easier to input many notes at once
-      noteTitleField.focus();
-    }
-  
-  }
-  
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // ----------------------------------------------------------- Display Saved Passwords ------------------------------------------------------------------------------------------
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-  async function displaySavedPasswords() {
-    const dbRequest = indexedDB.open('PasswordManager', currentVersion);
-
-    dbRequest.onsuccess = async (event) => {
-        const db = event.target.result;
-        const transaction = db.transaction('passwords', 'readonly');
-        const store = transaction.objectStore('passwords');
-        const getAllRequest = store.getAll();
-        const keyListRequest = store.getAllKeys();
-
-        getAllRequest.onsuccess = async () => {
-            const passwords = getAllRequest.result;
-            const keyList = await new Promise((resolve) => {
-                keyListRequest.onsuccess = () => resolve(keyListRequest.result);
-            });
-
-            passwordList.innerHTML = ''; // Clear previous list...only necessary for this function since it's called first
-
-            for (let key = 0; key < passwords.length; key++) {
-                const { service, email, username, password } = passwords[key];
-
-                const decryptedPassword = await window.electronAPI.decrypt(password);
-
-                const listItem = document.createElement('div');
-                listItem.classList.add('password-item');
-                if (document.getElementById('toggle-visibility').checked) {
-                  listItem.innerHTML = `
-                    <p><strong>Service:</strong> ${service}</p>
-                    <p><strong>Email:</strong> ${email}</p>
-                    <p><strong>Username:</strong> ${username}</p>
-                    <p class="password-item-password" style="display:block;"><strong>Password:</strong> ${decryptedPassword}</p>
-                    <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
-                    <button class="copy-btn fa fa-clipboard" style="font-size:24px;color:grey"></button>
-                `;
-                } else {
-                  listItem.innerHTML = `
-                    <p><strong>Service:</strong> ${service}</p>
-                    <p><strong>Email:</strong> ${email}</p>
-                    <p><strong>Username:</strong> ${username}</p>
-                    <p class="password-item-password" style="display:none;"><strong>Password:</strong> ${decryptedPassword}</p>
-                    <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
-                    <button class="copy-btn fa fa-clipboard" style="font-size:24px;color:grey"></button>
-                `;
-                }
-                
-                passwordList.appendChild(listItem);
-            }
-
-            // Attach delete button event listeners AFTER DOM is updated
-            document.querySelectorAll('.delete-btn').forEach((button) => {
-                button.addEventListener('click', (e) => {
-                    const key = parseInt(e.target.getAttribute('data-id'), 10);
-                    removePassword(key);
-                });
-            });
-
-            // attach add to clipboard to each copy button
-            document.querySelectorAll('.copy-btn').forEach((button) => {
-              button.addEventListener('click', (e) => {
-                const parent = button.parentElement
-                navigator.clipboard.writeText(parent.children[3].innerText.substring(9));
-                
-                // Clears the password from the clipboard...doesn't actually clear it...just writes a space " " so it cannot be 
-                // easily pasted on accident later or by another user later
-                setTimeout(() => {
-                  navigator.clipboard.writeText(" "); // works on occasion...when window is in focus I believe
-                }, 30000);
-              });
-          });
-        };
-    };
+function openDB(callback) {
+  const req = indexedDB.open('PasswordManager', currentVersion);
+  req.onsuccess = (e) => callback(e.target.result);
+  req.onerror   = (err) => { console.error('DB error:', err); showToast('Database error.', 'error'); };
 }
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // ----------------------------------------------------------- Display Saved Cards ------------------------------------------------------------------------------------------
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  async function displaySavedCards() {
-    const dbRequest = indexedDB.open('PasswordManager', currentVersion);
+// ── Clear form fields ─────────────────────────────────────────────────────────
 
-    dbRequest.onsuccess = async (event) => {
-        const db = event.target.result;
-        const transaction = db.transaction('cards', 'readonly');
-        const store = transaction.objectStore('cards');
-        const getAllRequest = store.getAll();
-        const keyListRequest = store.getAllKeys();
+function clearFormFields() {
+  const formType = document.getElementById('passwordFormHeader').value;
+  const ids = {
+    Password: ['service', 'email', 'username', 'password'],
+    Card:     ['cardholder', 'cardnumber', 'expirydate', 'cvv'],
+    Bank:     ['bank', 'routing', 'account'],
+    ID:       ['idType', 'idNumber'],
+    Note:     ['noteTitle', 'noteContent'],
+  };
+  (ids[formType] || []).forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) { el.value = ''; el.disabled = false; }
+  });
+  // Re-sync IMask internal state after clearing values.
+  activeMasks.forEach((m) => { try { m.updateValue(); } catch (_) {} });
+  // Focus first field.
+  const first = document.querySelector('#formFields input, #formFields textarea');
+  if (first) first.focus();
+}
 
-        getAllRequest.onsuccess = async () => {
-            const cards = getAllRequest.result;
-            const keyList = await new Promise((resolve) => {
-                keyListRequest.onsuccess = () => resolve(keyListRequest.result);
-            });
+// ── Display helpers ───────────────────────────────────────────────────────────
 
-            for (let key = 0; key < cards.length; key++) {
-                const { cardholder, cardnumber, expirydate, cvv } = cards[key];
+function visibilityDisplay() {
+  return document.getElementById('toggle-visibility').checked ? 'block' : 'none';
+}
 
-                const decryptedCVV = await window.electronAPI.decrypt(cvv);
+function currentFilter() {
+  return document.querySelector('.filter-btn.active')?.getAttribute('data-filter') || 'all';
+}
 
-                const listItem = document.createElement('div');
-                listItem.classList.add('password-item');
-                if (document.getElementById('toggle-visibility').checked) {
-                  listItem.innerHTML = `
-                    <p><strong>Cardholder:</strong> ${cardholder}</p>
-                    <p><strong>Number:</strong> ${cardnumber.substring(0,4)} ${cardnumber.substring(4,8)} ${cardnumber.substring(8,12)} ${cardnumber.substring(12,16)}</p>
-                    <p><strong>Expiration Date:</strong> ${expirydate}</p>
-                    <p class="password-item-password" style="display:block;"><strong>Password:</strong> ${decryptedCVV}</p>
-                    <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
-                    <button class="copy-btn fa fa-clipboard" style="font-size:24px;color:grey"></button>
-                `;
-                } else {
-                  listItem.innerHTML = `
-                    <p><strong>Cardholder:</strong> ${cardholder}</p>
-                    <p><strong>Number:</strong> ${cardnumber.substring(0,4)} ${cardnumber.substring(4,8)} ${cardnumber.substring(8,12)} ${cardnumber.substring(12,16)}</p>
-                    <p><strong>Expiration Date:</strong> ${expirydate}</p>
-                    <p class="password-item-password" style="display:none;"><strong>Password:</strong> ${decryptedCVV}</p>
-                    <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
-                    <button class="copy-btn fa fa-clipboard" style="font-size:24px;color:grey"></button>
-                `;
-                }
-                
-                passwordList.appendChild(listItem);
-            }
+function makeItem(type, html) {
+  const div = document.createElement('div');
+  div.classList.add('password-item');
+  div.setAttribute('data-type', type);
+  const f = currentFilter();
+  if (f !== 'all' && f !== type) div.style.display = 'none';
+  div.innerHTML = html;
+  return div;
+}
 
+function deleteBtn(store, key) {
+  return `<button class="delete-btn fa fa-trash-o" data-id="${key}" data-store="${store}"></button>`;
+}
 
-            // Attach delete button event listeners AFTER DOM is updated
-            document.querySelectorAll('.delete-btn').forEach((button) => {
-                button.addEventListener('click', (e) => {
-                    const key = parseInt(e.target.getAttribute('data-id'), 10);
-                    removePassword(key);
-                });
-            });
+function copyBtn() {
+  return `<button class="copy-btn fa fa-clipboard"></button>`;
+}
 
-            // attach add to clipboard to each copy button
-            document.querySelectorAll('.copy-btn').forEach((button) => {
-              button.addEventListener('click', (e) => {
-                const parent = button.parentElement
-                navigator.clipboard.writeText(parent.children[3].innerText.substring(9));
-                
-                // Clears the password from the clipboard...doesn't actually clear it...just writes a space " " so it cannot be 
-                // easily pasted on accident later or by another user later
-                setTimeout(() => {
-                  navigator.clipboard.writeText(" "); // works on occasion...when window is in focus I believe
-                }, 30000);
-              });
-          });
-        };
+// ── Display: Passwords ────────────────────────────────────────────────────────
+
+async function displaySavedPasswords() {
+  openDB(async (db) => {
+    const tx    = db.transaction('passwords', 'readonly');
+    const store = tx.objectStore('passwords');
+    const allReq  = store.getAll();
+    const keysReq = store.getAllKeys();
+
+    allReq.onsuccess = async () => {
+      const passwords = allReq.result;
+      const keys = await new Promise((res) => { keysReq.onsuccess = () => res(keysReq.result); });
+      const list = document.getElementById('passwordList');
+
+      for (let i = 0; i < passwords.length; i++) {
+        const { service, email, username, password } = passwords[i];
+        const dec = await window.electronAPI.decrypt(password);
+        const vd  = visibilityDisplay();
+        list.appendChild(makeItem('passwords', `
+          <p><strong>Service:</strong> ${service}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Username:</strong> ${username}</p>
+          <p class="password-item-password" style="display:${vd};"><strong>Password:</strong> ${dec}</p>
+          ${deleteBtn('passwords', keys[i])} ${copyBtn()}`));
+      }
+      attachListHandlers();
     };
-  }
+  });
+}
 
+// ── Display: Cards ────────────────────────────────────────────────────────────
 
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // ----------------------------------------------------------- Display Saved Bank Accounts --------------------------------------------------------------------------------------
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+async function displaySavedCards() {
+  openDB(async (db) => {
+    const tx    = db.transaction('cards', 'readonly');
+    const store = tx.objectStore('cards');
+    const allReq  = store.getAll();
+    const keysReq = store.getAllKeys();
 
-  async function displaySavedBankAccounts() {
-    const dbRequest = indexedDB.open('PasswordManager', currentVersion);
+    allReq.onsuccess = async () => {
+      const cards = allReq.result;
+      const keys = await new Promise((res) => { keysReq.onsuccess = () => res(keysReq.result); });
+      const list = document.getElementById('passwordList');
 
-    dbRequest.onsuccess = async (event) => {
-        const db = event.target.result;
-        const transaction = db.transaction('bankAccounts', 'readonly');
-        const store = transaction.objectStore('bankAccounts');
-        const getAllRequest = store.getAll();
-        const keyListRequest = store.getAllKeys();
-
-        getAllRequest.onsuccess = async () => {
-            const bankAccounts = getAllRequest.result;
-            const keyList = await new Promise((resolve) => {
-                keyListRequest.onsuccess = () => resolve(keyListRequest.result);
-            });
-
-            for (let key = 0; key < bankAccounts.length; key++) {
-                const { bank, routing, account } = bankAccounts[key];
-
-                const decryptedAccount = await window.electronAPI.decrypt(account);
-
-                const listItem = document.createElement('div');
-                listItem.classList.add('password-item');
-                if (document.getElementById('toggle-visibility').checked) {
-                  listItem.innerHTML = `
-                    <p><strong>Bank:</strong> ${bank}</p>
-                    <p><strong>Routing:</strong> ${routing}</p>
-                    <p class="password-item-password" style="display:block;"><strong>Account:</strong> ${decryptedAccount}</p>
-                    <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
-                    <button class="copy-btn fa fa-clipboard" style="font-size:24px;color:grey"></button>
-                `;
-                } else {
-                  listItem.innerHTML = `
-                    <p><strong>Bank:</strong> ${bank}</p>
-                    <p><strong>Routing:</strong> ${routing}</p>
-                    <p class="password-item-password" style="display:none;"><strong>Account:</strong> ${decryptedAccount}</p>
-                    <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
-                    <button class="copy-btn fa fa-clipboard" style="font-size:24px;color:grey"></button>
-                `;
-                }
-                
-                passwordList.appendChild(listItem);
-            }
-
-
-            // Attach delete button event listeners AFTER DOM is updated
-            document.querySelectorAll('.delete-btn').forEach((button) => {
-                button.addEventListener('click', (e) => {
-                    const key = parseInt(e.target.getAttribute('data-id'), 10);
-                    removePassword(key);
-                });
-            });
-
-            // attach add to clipboard to each copy button
-            document.querySelectorAll('.copy-btn').forEach((button) => {
-              button.addEventListener('click', (e) => {
-                const parent = button.parentElement
-                navigator.clipboard.writeText(parent.children[3].innerText.substring(9));
-                
-                // Clears the password from the clipboard...doesn't actually clear it...just writes a space " " so it cannot be 
-                // easily pasted on accident later or by another user later
-                setTimeout(() => {
-                  navigator.clipboard.writeText(" "); // works on occasion...when window is in focus I believe
-                }, 30000);
-              });
-          });
-        };
+      for (let i = 0; i < cards.length; i++) {
+        const { cardholder, cardnumber, expirydate, cvv } = cards[i];
+        const dec = await window.electronAPI.decrypt(cvv);
+        const vd  = visibilityDisplay();
+        const n   = cardnumber.replace(/\s/g, '');
+        const fmt = `${n.slice(0,4)} ${n.slice(4,8)} ${n.slice(8,12)} ${n.slice(12,16)}`;
+        list.appendChild(makeItem('cards', `
+          <p><strong>Cardholder:</strong> ${cardholder}</p>
+          <p><strong>Number:</strong> ${fmt}</p>
+          <p><strong>Expires:</strong> ${expirydate}</p>
+          <p class="password-item-password" style="display:${vd};"><strong>CVV:</strong> ${dec}</p>
+          ${deleteBtn('cards', keys[i])} ${copyBtn()}`));
+      }
+      attachListHandlers();
     };
-  }
+  });
+}
 
+// ── Display: Bank accounts ────────────────────────────────────────────────────
 
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // ----------------------------------------------------------- Display Saved IDs --------------------------------------------------------------------------------------
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+async function displaySavedBankAccounts() {
+  openDB(async (db) => {
+    const tx    = db.transaction('bankAccounts', 'readonly');
+    const store = tx.objectStore('bankAccounts');
+    const allReq  = store.getAll();
+    const keysReq = store.getAllKeys();
 
-  async function displaySavedIDs() {
-    const dbRequest = indexedDB.open('PasswordManager', currentVersion);
+    allReq.onsuccess = async () => {
+      const accounts = allReq.result;
+      const keys = await new Promise((res) => { keysReq.onsuccess = () => res(keysReq.result); });
+      const list = document.getElementById('passwordList');
 
-    dbRequest.onsuccess = async (event) => {
-        const db = event.target.result;
-        const transaction = db.transaction('ids', 'readonly');
-        const store = transaction.objectStore('ids');
-        const getAllRequest = store.getAll();
-        const keyListRequest = store.getAllKeys();
-
-        getAllRequest.onsuccess = async () => {
-            const ids = getAllRequest.result;
-            const keyList = await new Promise((resolve) => {
-                keyListRequest.onsuccess = () => resolve(keyListRequest.result);
-            });
-
-            for (let key = 0; key < ids.length; key++) {
-                const { idType, encryptedIdNumber } = ids[key];
-
-                const decryptedIdNumber = await window.electronAPI.decrypt(encryptedIdNumber);
-
-                const listItem = document.createElement('div');
-                listItem.classList.add('password-item');
-                if (document.getElementById('toggle-visibility').checked) {
-                  listItem.innerHTML = `
-                    <p><strong>ID Type:</strong> ${idType}</p>
-                    <p class="password-item-password" style="display:block;"><strong>ID Number:</strong> ${decryptedIdNumber}</p>
-                    <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
-                    <button class="copy-btn fa fa-clipboard" style="font-size:24px;color:grey"></button>
-                `;
-                } else {
-                  listItem.innerHTML = `
-                    <p><strong>ID Type:</strong> ${idType}</p>
-                    <p class="password-item-password" style="display:none;"><strong>ID Number:</strong> ${decryptedIdNumber}</p>
-                    <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
-                    <button class="copy-btn fa fa-clipboard" style="font-size:24px;color:grey"></button>
-                `;
-                }
-                
-                passwordList.appendChild(listItem);
-            }
-
-
-            // Attach delete button event listeners AFTER DOM is updated
-            document.querySelectorAll('.delete-btn').forEach((button) => {
-                button.addEventListener('click', (e) => {
-                    const key = parseInt(e.target.getAttribute('data-id'), 10);
-                    removePassword(key);
-                });
-            });
-
-            // attach add to clipboard to each copy button
-            document.querySelectorAll('.copy-btn').forEach((button) => {
-              button.addEventListener('click', (e) => {
-                const parent = button.parentElement
-                navigator.clipboard.writeText(parent.children[3].innerText.substring(9));
-                
-                // Clears the password from the clipboard...doesn't actually clear it...just writes a space " " so it cannot be 
-                // easily pasted on accident later or by another user later
-                setTimeout(() => {
-                  navigator.clipboard.writeText(" "); // works on occasion...when window is in focus I believe
-                }, 30000);
-              });
-          });
-        };
+      for (let i = 0; i < accounts.length; i++) {
+        const { bank, routing, account } = accounts[i];
+        const dec = await window.electronAPI.decrypt(account);
+        const vd  = visibilityDisplay();
+        list.appendChild(makeItem('bank', `
+          <p><strong>Bank:</strong> ${bank}</p>
+          <p><strong>Routing:</strong> ${routing}</p>
+          <p class="password-item-password" style="display:${vd};"><strong>Account:</strong> ${dec}</p>
+          ${deleteBtn('bankAccounts', keys[i])} ${copyBtn()}`));
+      }
+      attachListHandlers();
     };
-  }
+  });
+}
 
+// ── Display: IDs ──────────────────────────────────────────────────────────────
 
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // ----------------------------------------------------------- Display Saved Notes --------------------------------------------------------------------------------------
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+async function displaySavedIDs() {
+  openDB(async (db) => {
+    const tx    = db.transaction('ids', 'readonly');
+    const store = tx.objectStore('ids');
+    const allReq  = store.getAll();
+    const keysReq = store.getAllKeys();
 
-  async function displaySavedNotes() {
-    const dbRequest = indexedDB.open('PasswordManager', currentVersion);
+    allReq.onsuccess = async () => {
+      const ids = allReq.result;
+      const keys = await new Promise((res) => { keysReq.onsuccess = () => res(keysReq.result); });
+      const list = document.getElementById('passwordList');
 
-    dbRequest.onsuccess = async (event) => {
-        const db = event.target.result;
-        const transaction = db.transaction('notes', 'readonly');
-        const store = transaction.objectStore('notes');
-        const getAllRequest = store.getAll();
-        const keyListRequest = store.getAllKeys();
-
-        getAllRequest.onsuccess = async () => {
-            const notes = getAllRequest.result;
-            const keyList = await new Promise((resolve) => {
-                keyListRequest.onsuccess = () => resolve(keyListRequest.result);
-            });
-
-            for (let key = 0; key < notes.length; key++) {
-                const { noteTitle, noteContent } = notes[key];
-
-                const decryptedContent = await window.electronAPI.decrypt(noteContent);
-
-                const listItem = document.createElement('div');
-                listItem.classList.add('password-item');
-                if (document.getElementById('toggle-visibility').checked) {
-                  listItem.innerHTML = `
-                    <p><strong>Title:</strong> ${noteTitle}</p>
-                    <p class="password-item-password" style="display:block;"><strong>Content:</strong> ${decryptedContent}</p>
-                    <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
-                    <button class="copy-btn fa fa-clipboard" style="font-size:24px;color:grey"></button>
-                `;
-                } else {
-                  listItem.innerHTML = `
-                    <p><strong>Title:</strong> ${noteTitle}</p>
-                    <p class="password-item-password" style="display:none;"><strong>Content:</strong> ${decryptedContent}</p>
-                    <button class="delete-btn fa fa-trash-o" data-id="${keyList[key]}" style="font-size:24px;color:red"></button>
-                    <button class="copy-btn fa fa-clipboard" style="font-size:24px;color:grey"></button>
-                `;
-                }
-                
-                passwordList.appendChild(listItem);
-            }
-
-
-            // Attach delete button event listeners AFTER DOM is updated
-            document.querySelectorAll('.delete-btn').forEach((button) => {
-                button.addEventListener('click', (e) => {
-                    const key = parseInt(e.target.getAttribute('data-id'), 10);
-                    removePassword(key);
-                });
-            });
-
-            // attach add to clipboard to each copy button
-            document.querySelectorAll('.copy-btn').forEach((button) => {
-              button.addEventListener('click', (e) => {
-                const parent = button.parentElement
-                navigator.clipboard.writeText(parent.children[3].innerText.substring(9));
-                
-                // Clears the password from the clipboard...doesn't actually clear it...just writes a space " " so it cannot be 
-                // easily pasted on accident later or by another user later
-                setTimeout(() => {
-                  navigator.clipboard.writeText(" "); // works on occasion...when window is in focus I believe
-                }, 30000);
-              });
-          });
-
-          setTimeout(function() {
-            document.getElementById("num-entries").innerHTML = "<strong>Entry Count: </strong>" + passwordList.childElementCount;
-          }, 500); // 0.5 second delay to ensure entries are loaded
-        };
+      for (let i = 0; i < ids.length; i++) {
+        const { idType, encryptedIdNumber } = ids[i];
+        const dec = await window.electronAPI.decrypt(encryptedIdNumber);
+        const vd  = visibilityDisplay();
+        list.appendChild(makeItem('ids', `
+          <p><strong>ID Type:</strong> ${idType}</p>
+          <p class="password-item-password" style="display:${vd};"><strong>ID Number:</strong> ${dec}</p>
+          ${deleteBtn('ids', keys[i])} ${copyBtn()}`));
+      }
+      attachListHandlers();
     };
-  }
-  
-  // Dropdown menu script
-  // Toggle Dropdown
-  const settingsIcon = document.querySelector('.settings-icon');
-  const dropdown = document.querySelector('.dropdown');
+  });
+}
 
-  settingsIcon.addEventListener('click', () => {
-    dropdown.classList.toggle('active');
+// ── Display: Notes ────────────────────────────────────────────────────────────
+
+async function displaySavedNotes() {
+  openDB(async (db) => {
+    const tx    = db.transaction('notes', 'readonly');
+    const store = tx.objectStore('notes');
+    const allReq  = store.getAll();
+    const keysReq = store.getAllKeys();
+
+    allReq.onsuccess = async () => {
+      const notes = allReq.result;
+      const keys = await new Promise((res) => { keysReq.onsuccess = () => res(keysReq.result); });
+      const list = document.getElementById('passwordList');
+
+      for (let i = 0; i < notes.length; i++) {
+        const { noteTitle, noteContent } = notes[i];
+        const dec = await window.electronAPI.decrypt(noteContent);
+        const vd  = visibilityDisplay();
+        list.appendChild(makeItem('notes', `
+          <p><strong>Title:</strong> ${noteTitle}</p>
+          <p class="password-item-password" style="display:${vd};"><strong>Content:</strong> ${dec}</p>
+          ${deleteBtn('notes', keys[i])} ${copyBtn()}`));
+      }
+
+      // Update entry count after the last display function completes.
+      setTimeout(() => {
+        const count = document.getElementById('passwordList').childElementCount;
+        document.getElementById('num-entries').innerHTML = `<strong>Entry Count:</strong> ${count}`;
+      }, 400);
+
+      attachListHandlers();
+    };
+  });
+}
+
+// ── Attach delete / copy handlers ─────────────────────────────────────────────
+// Called after each display function so newly appended items get handlers.
+// Using onclick assignment prevents duplicate listeners from multiple calls.
+
+function attachListHandlers() {
+  document.querySelectorAll('.delete-btn').forEach((btn) => {
+    btn.onclick = () => {
+      const store = btn.getAttribute('data-store');
+      const key   = parseInt(btn.getAttribute('data-id'), 10);
+      removeEntry(store, key);
+    };
   });
 
-  // Theme Toggler
-  const toggleThemeBtn = document.getElementById('toggle-theme');
-  const themeLink = document.getElementById('theme-link');
-
-  // Functions to toggle light/dark mode
-  toggleThemeBtn.addEventListener('click', () => {
-    if (themeLink.getAttribute('href') === 'lightstyle.css') {
-      themeLink.setAttribute('href', 'style.css');
-      document.body.classList.add('light-mode'); // Add class for visual adjustments
-      // console.log("light mode")
-      return;
-    }
-    else {
-      themeLink.setAttribute('href', 'lightstyle.css');
-      document.body.classList.add('light-mode'); // Add class for visual adjustments
-      // console.log("dark mode")
-      return;
-    }
+  document.querySelectorAll('.copy-btn').forEach((btn) => {
+    btn.onclick = () => {
+      const secretEl = btn.parentElement.querySelector('.password-item-password');
+      if (!secretEl) return;
+      // Strip "Label: " prefix before copying.
+      const text = secretEl.innerText.replace(/^[^:]+:\s*/, '');
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Copied to clipboard.', 'info');
+        setTimeout(() => navigator.clipboard.writeText(' '), 30000);
+      });
+    };
   });
+}
 
-  // Password Visibility toggler
-  const toggleVisibilityBtn = document.getElementById('toggle-visibility');
-  
-  toggleVisibilityBtn.addEventListener('click', () => {
-    document.querySelectorAll('.password-item-password').forEach((paragraph) => {
-      if (paragraph.style.display == "none") {
-        paragraph.style = "display:block;";
-      }
-      else {
-        paragraph.style = "display:none;";
-      }
-    })
-  });
+// ── Delete entry ──────────────────────────────────────────────────────────────
 
-  // Function to remove a password (used with delete button on each entry)
-  function removePassword(key) {
-    const request = indexedDB.open('PasswordManager', currentVersion);
-
-    request.onsuccess = (event) => {
-      const db = event.target.result;
-      const transaction = db.transaction('passwords', 'readwrite');
-      const store = transaction.objectStore('passwords');
-
-      // console.log(typeof(key));
-      // console.log(parseInt(key));
-      const deleteRequest = store.delete(key);
-
-      deleteRequest.onsuccess = () => {
-        // alert('Password deleted successfully!');  causes error
-        displaySavedPasswords();  // refresh list after deletion
-        displaySavedCards(); // refresh list after deletion
-        displaySavedBankAccounts(); // refresh list after deletion
-        displaySavedIDs(); // refresh list after deletion
-        displaySavedNotes(); // refresh list after deletion
-      }
-
-      deleteRequest.onerror = (err) => {
-        console.error('Error deleting from ' + tableName + ':', err);
-        alert('Failed to delete item. Please try again.')
-      }
-    }
-
-    request.onerror = (err) => {
-      console.error('Database error:', err)
-    }
+function removeEntry(storeName, key) {
+  if (!ENTRY_STORES.includes(storeName) || Number.isNaN(key)) {
+    console.error('Invalid delete request:', storeName, key);
+    return;
   }
+  openDB((db) => {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).delete(key);
+    tx.oncomplete = () => refreshAllLists();
+    tx.onerror = (err) => { console.error('Delete error:', err); showToast('Failed to delete entry.', 'error'); };
+  });
+}
 
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // ----------------------------------------------------------- Search Database Method -------------------------------------------------------------------------------------------
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// ── Dropdown click-outside ────────────────────────────────────────────────────
 
-// The outcome of this method is what I had originally envisioned...after consulting ChatGPT I used it's method to:
-// First, retrieve all entries, then use Javascript to filter the data down to what meets the search criteria.
-function searchDatabaseVersion2(searchTerm) {
+const settingsIcon = document.querySelector('.settings-icon');
+const dropdown     = document.querySelector('.dropdown');
+
+settingsIcon.addEventListener('click', (e) => {
+  e.stopPropagation();
+  dropdown.classList.toggle('active');
+});
+
+document.addEventListener('click', (e) => {
+  if (!dropdown.contains(e.target)) dropdown.classList.remove('active');
+});
+
+// ── Theme toggler ─────────────────────────────────────────────────────────────
+
+document.getElementById('toggle-theme').addEventListener('click', () => {
+  const link = document.getElementById('theme-link');
+  link.setAttribute('href', link.getAttribute('href') === 'lightstyle.css' ? 'style.css' : 'lightstyle.css');
+  document.body.classList.toggle('light-mode');
+});
+
+// ── Visibility toggler ────────────────────────────────────────────────────────
+
+document.getElementById('toggle-visibility').addEventListener('click', function() {
+  const display = this.checked ? 'block' : 'none';
+  document.querySelectorAll('.password-item-password').forEach((p) => { p.style.display = display; });
+});
+
+// ── Filter buttons ────────────────────────────────────────────────────────────
+
+document.querySelectorAll('.filter-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    applyCurrentFilter();
+  });
+});
+
+// ── Search ────────────────────────────────────────────────────────────────────
+
+document.getElementById('search-bar').addEventListener('input', function() {
+  const query = this.value.trim();
+  if (query.length === 0) { refreshAllLists(); return; }
+
+  searchPasswords(query).then((results) => {
+    const list = document.getElementById('passwordList');
+    list.innerHTML = '';
+    const vd = visibilityDisplay();
+    results.forEach((r) => {
+      list.appendChild(makeItem('passwords', `
+        <p><strong>Service:</strong> ${r.service}</p>
+        <p><strong>Email:</strong> ${r.email}</p>
+        <p><strong>Username:</strong> ${r.username}</p>
+        <p class="password-item-password" style="display:${vd};"><strong>Password:</strong> ${r.password}</p>`));
+    });
+  }).catch((err) => {
+    console.error(err);
+    showToast('Search error.', 'error');
+  });
+});
+
+function searchPasswords(searchTerm) {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open("PasswordManager", currentVersion);
-    request.onsuccess = function(event) {
-        const db = event.target.result;
-        const transaction = db.transaction(["passwords", "cards", "bankAccounts", "ids", "notes"], "readonly");
-        const store1 = transaction.objectStore("passwords");
-        // const store2 = transaction.objectStore("passwords");
-        // const store3 = transaction.objectStore("passwords");
-        // const store4 = transaction.objectStore("passwords");
-        // const store5 = transaction.objectStore("passwords");
-        const getAllPasswordsRequest = store1.getAll();
-        // const getAllCardsRequest = store2.getAll();
-        // const getAllBanksRequest = store3.getAll();
-        // const getAllIDsRequest = store4.getAll();
-        // const getAllNotesRequest = store5.getAll();
-
-        getAllRequest.onsuccess = async function() {
-          
-            const results = getAllRequest.result.filter(entry =>
-                entry.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                entry.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                entry.username.toLowerCase().includes(searchTerm.toLowerCase()) // ||
-                // entry.password.toLowerCase().includes(searchTerm.toLowerCase()) // removed because this would cause some things to pop up when the substring being searched is present within the encrypted password
-            );
-
-            for (let result of results) {
-              result.password = await window.electronAPI.decrypt(result.password);
-            }
-
-            resolve(results);
-        };
-
-        getAllRequest.onerror = function() {
-            reject(getAllRequest.error);
-        };
-    };
+    openDB((db) => {
+      const tx  = db.transaction('passwords', 'readonly');
+      const req = tx.objectStore('passwords').getAll();
+      req.onsuccess = async () => {
+        const lower = searchTerm.toLowerCase();
+        const matched = req.result.filter((e) =>
+          e.service.toLowerCase().includes(lower) ||
+          e.email.toLowerCase().includes(lower) ||
+          e.username.toLowerCase().includes(lower)
+        );
+        for (const r of matched) r.password = await window.electronAPI.decrypt(r.password);
+        resolve(matched);
+      };
+      req.onerror = () => reject(req.error);
+    });
   });
 }
 
-// Search function
-// function searchDatabase(databaseName, storeName, searchKey, searchValue) {
-//   return new Promise(async (resolve, reject) => {
-//       // Open a connection to the database
-//       const request = indexedDB.open(databaseName, currentVersion);
+// ── Self-destruct ─────────────────────────────────────────────────────────────
 
-//       request.onerror = (event) => {
-//           reject(`Failed to open the database: ${event.target.errorCode}`);
-//       };
+document.getElementById('self-destruct').addEventListener('click', async () => {
+  dropdown.classList.remove('active');
 
-//       request.onsuccess = (event) => {
-//           const db = event.target.result;
-//           const transaction = db.transaction(storeName, "readonly");
-//           const objectStore = transaction.objectStore(storeName);
-//           const index = objectStore.index(searchKey);
+  const confirmed = await showConfirm(
+    'WARNING: This will permanently delete all saved entries. Your master password will be preserved. This cannot be undone.'
+  );
+  if (!confirmed) return;
 
-//           const results = [];
-//           const query = index.openCursor(IDBKeyRange.only(searchValue));
-
-//           query.onerror = (event) => {
-//               reject(`Error during search: ${event.target.errorCode}`);
-//           };
-
-//           query.onsuccess = (event) => {
-//               const cursor = event.target.result;
-//               if (cursor) {
-//                   results.push(cursor.value); // Collect matching records
-//                   cursor.continue();
-//               } else {
-//                   resolve(results); // Resolve promise with results when done
-//               }
-//           };
-//       };
-
-//       request.onupgradeneeded = () => {
-//           reject("Database schema does not match expected.");
-//       };
-//   });
-// }
-
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // ----------------------------------------------------------- Search Logic -----------------------------------------------------------------------------------------------------
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-// Searching logic
-  const searchBar = document.getElementById('search-bar');
-  const passwordListHeader = document.getElementById('passwordListHeader');
-  const passwordList = document.getElementById('passwordList');
-  const searchByWhat = document.getElementById('searchByWhat');
-
-  searchBar.addEventListener('input', function(event) {
-    const query = event.target.value;
-    if (query.length > 0) {
-      // searchDatabase('PasswordManager', 'passwords', searchByWhat.value, query).then(results => { no longer used thanks to ChatGPT recommendation of using javascript to filter
-        searchDatabaseVersion2(query).then(results => {
-          // Display results
-          passwordListHeader.innerHTML = 'Search Results';
-          if (document.getElementById('toggle-visibility').checked) {
-            passwordList.innerHTML = results.map(result => 
-              `<div class="password-item">
-              <p><strong>Service:</strong> ${result.service}</p>
-              <p><strong>Email:</strong> ${result.email}</p>
-              <p><strong>Username:</strong> ${result.username}</p>
-              <p class="password-item-password" style="display:block;"><strong>Password:</strong> ${result.password}</p>
-              </div>`).join('')
-          } else {
-            passwordList.innerHTML = results.map(result => 
-              `<div class="password-item">
-              <p><strong>Service:</strong> ${result.service}</p>
-              <p><strong>Email:</strong> ${result.email}</p>
-              <p><strong>Username:</strong> ${result.username}</p>
-              <p class="password-item-password" style="display:none;"><strong>Password:</strong> ${result.password}</p>
-              </div>`).join('')
-          }
-        }).catch(error => {
-        console.error(error);
-        passwordListHeader.innerHTML = "Error during search";
-        passwordList.innerHTML = error;
-      })
-    } else {
-      passwordListHeader.innerHTML = "Saved Items";
-      displaySavedPasswords();
-      displaySavedCards();
-      displaySavedBankAccounts(); 
-      displaySavedIDs();
-      displaySavedNotes();
-    }
+  openDB((db) => {
+    const tx = db.transaction(ENTRY_STORES, 'readwrite');
+    ENTRY_STORES.forEach((s) => tx.objectStore(s).clear());
+    tx.oncomplete = () => { showToast('All entries deleted.', 'success'); refreshAllLists(); };
+    tx.onerror = (err) => { console.error(err); showToast('Failed to delete data.', 'error'); };
   });
-
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // ----------------------------------------------------------- Self-Destruct Button ---------------------------------------------------------------------------------------------
-  // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-  // Self-Destruct button event listener (delete the database)
-  const selfDestructButton = document.getElementById("self-destruct");
-
-  selfDestructButton.addEventListener('click', () => {
-    // Display a confirmation popup
-    const confirmation = confirm(
-      "WARNING: This action will permanently delete all your saved passwords. Are you sure you want to proceed? This cannot be undone."
-    );
-
-    // If the user confirms, proceed with deletion
-    if (confirmation) {
-      // Add your deletion logic here
-      const dbRequest = indexedDB.open('PasswordManager', currentVersion);
-
-      dbRequest.onsuccess = (event) => {
-        const db = event.target.result;
-        const transaction = db.transaction('passwords', 'readwrite');
-        const store = transaction.objectStore('passwords');
-        const clearRequest = store.clear();
-        console.log("Database successfully deleted.");
-
-        displaySavedPasswords();
-        displaySavedCards();
-        displaySavedBankAccounts(); 
-        displaySavedIDs();
-        displaySavedNotes();
-
-        // Also clear other object stores
-        const cardTransaction = db.transaction('cards', 'readwrite');
-        const cardStore = cardTransaction.objectStore('cards');
-        const clearCardRequest = cardStore.clear();
-
-        clearCardRequest.onerror = (err) => {
-          console.error('Error deleting cards:', err);
-          console.log('Failed to delete cards. Please try again.');
-        }
-    
-        clearRequest.onerror = (err) => {
-          console.error('Error deleting passwords:', err);
-          console.log('Failed to delete passwords. Please try again.');
-        };
-      };
-  
-      dbRequest.onerror = (err) => {
-      console.error('Database error:', err);
-      console.log('Failed to open the database. Please try again.');
-      };
-      console.log("Self-destruct initiated: All data has been removed.");
-    } else {
-      // If the user cancels, do nothing
-      console.log("Self-destruct canceled.");
-    }
-    
-  });
+});

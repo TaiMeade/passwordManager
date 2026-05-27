@@ -1,62 +1,71 @@
-// When enter is pressed while in input...submit the form AKA click the Save button
-document.getElementById("masterPassword").addEventListener("keypress", function(event) {
-    if (event.key === "Enter") {
-        event.preventDefault();
-        document.getElementById("saveMaster").click();
-    }
-})
+function showToast(message, type = 'info') {
+  const bg = {
+    success: 'linear-gradient(to right, #388e3c, #4caf50)',
+    error:   'linear-gradient(to right, #c62828, #e53935)',
+    warning: 'linear-gradient(to right, #e65100, #fb8c00)',
+    info:    'linear-gradient(to right, #1565c0, #1976d2)',
+  };
+  Toastify({
+    text: message,
+    duration: 4000,
+    gravity: 'bottom',
+    position: 'right',
+    stopOnFocus: true,
+    style: { background: bg[type] || bg.info, borderRadius: '6px' },
+  }).showToast();
+}
 
-document.getElementById("saveMaster").addEventListener("click", async () => {
-    const password = document.getElementById("masterPassword").value;
-    if (!password) {
-        alert("Please enter a password.");
-        return;
-    }
+document.getElementById('masterPassword').addEventListener('keypress', function(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    document.getElementById('saveMaster').click();
+  }
+});
 
-    // Password must contain:
-    //  9 or more characters
-    //  One lower-case character
-    //  One upper-case character
-    //  One special character
-    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{9,}$/.test(password)) {
-        alert("Password does not meet the minimum requirements: \n    Length must be longer than 8 characters.\n    Must contain at least 1 special character.\n    Must contain at least 1 lower-case letter.\n    Must contain at least 1 upper-case letter.");
-        return
-    }
+document.getElementById('saveMaster').addEventListener('click', async () => {
+  const password = document.getElementById('masterPassword').value;
 
-    // Encrypt password before storing
-    const encryptedPassword = await window.electronAPI.encrypt(password);
+  if (!password) {
+    showToast('Please enter a password.', 'warning');
+    return;
+  }
 
-    // Store in IndexedDB
-    const dbRequest = indexedDB.open("PasswordManager", window.currentVersion);
-    dbRequest.onupgradeneeded = (event) => {
-        const db = event.target.result;
-        if (!db.objectStoreNames.contains("settings")) {
-            db.createObjectStore("settings", { keyPath: "id" });
-        }
-        if (!db.objectStoreNames.contains("passwords")) {
-            db.createObjectStore("passwords", { keyPath: "id" });
-        }
-        if (!db.objectStoreNames.contains("cards")) {
-            db.createObjectStore("cards", { keyPath: "id" });
-        }
-        if (!db.objectStoreNames.contains("bankAccounts")) {
-            db.createObjectStore("bankAccounts", { keyPath: "id" });
-        }
-        if (!db.objectStoreNames.contains("ids")) {
-            db.createObjectStore("ids", { keyPath: "id" });
-        }
-        if (!db.objectStoreNames.contains("notes")) {
-            db.createObjectStore("notes", { keyPath: "id" });
-        }
+  if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{9,}$/.test(password)) {
+    showToast('Password must be 9+ characters and include uppercase, lowercase, and a special character.', 'warning');
+    return;
+  }
+
+  const encryptedPassword = await window.electronAPI.encrypt(password);
+
+  const dbRequest = indexedDB.open('PasswordManager', window.currentVersion);
+
+  dbRequest.onupgradeneeded = (event) => {
+    const db = event.target.result;
+    const stores = ['settings', 'passwords', 'cards', 'bankAccounts', 'ids', 'notes'];
+    stores.forEach((name) => {
+      if (!db.objectStoreNames.contains(name)) {
+        db.createObjectStore(name, name === 'settings' ? { keyPath: 'id' } : { autoIncrement: true });
+      }
+    });
+  };
+
+  dbRequest.onsuccess = (event) => {
+    const db = event.target.result;
+    const transaction = db.transaction('settings', 'readwrite');
+    const store = transaction.objectStore('settings');
+    store.put({ id: 'masterPassword', value: encryptedPassword });
+    transaction.oncomplete = () => {
+      showToast('Master password saved! Redirecting…', 'success');
+      setTimeout(() => { window.location.href = 'login.html'; }, 1500);
     };
-    dbRequest.onsuccess = (event) => {
-        const db = event.target.result;
-        const transaction = db.transaction("settings", "readwrite");
-        const store = transaction.objectStore("settings");
-        store.put({ id: "masterPassword", value: encryptedPassword });
-        transaction.oncomplete = () => {
-            alert("Master password set successfully!");
-            window.location.href = "login.html"; // Redirect to login page
-        };
+    transaction.onerror = (err) => {
+      console.error(err);
+      showToast('Failed to save master password.', 'error');
     };
+  };
+
+  dbRequest.onerror = (err) => {
+    console.error(err);
+    showToast('Database error.', 'error');
+  };
 });
