@@ -1,43 +1,54 @@
 <template>
   <v-container class="fill-height" fluid>
-    <div class="background-image" />
+    <v-row align="center" justify="center">
+      <v-col cols="12" sm="8" md="5" lg="4" xl="3">
+        <div class="auth-card vault-rise">
+          <div class="auth-glow" />
 
-    <v-row align="center" justify="center" style="z-index: 1">
-      <v-col cols="12" sm="8" md="5" lg="4">
-        <div class="text-center">
-          <h2 class="text-h5 font-weight-bold mb-6" style="color: #1e1e1e">
-            The Vault
-          </h2>
+          <div class="text-center">
+            <img src="../assets/logo.png" alt="The Vault" class="auth-logo">
+            <h1 class="vault-wordmark text-h6 mt-4">The Vault</h1>
+            <p class="vault-eyebrow mt-2">Enter your master password</p>
+          </div>
 
-          <v-form @submit.prevent="handleLogin">
+          <v-form class="mt-8" @submit.prevent="handleLogin">
             <v-text-field
+              ref="fieldRef"
               v-model="password"
-              type="password"
-              placeholder="Enter Master Password"
-              variant="outlined"
-              density="comfortable"
-              bg-color="rgba(255,255,255,0.25)"
-              @keydown.enter="handleLogin"
-            />
+              :type="show ? 'text' : 'password'"
+              label="Master password"
+              prepend-inner-icon="mdi-shield-key-outline"
+              autofocus
+              :error="hasError"
+              @update:model-value="hasError = false"
+            >
+              <template #append-inner>
+                <v-icon class="cursor-pointer" @click="show = !show">
+                  {{ show ? 'mdi-eye-off' : 'mdi-eye' }}
+                </v-icon>
+              </template>
+            </v-text-field>
 
             <v-btn
               type="submit"
-              color="success"
+              color="primary"
               size="large"
               block
               :loading="loading"
-              class="mt-4"
+              class="mt-2 font-weight-bold"
             >
-              Login
+              <v-icon start>mdi-lock-open-variant-outline</v-icon>
+              Unlock
             </v-btn>
           </v-form>
+
+          <p class="auth-foot vault-eyebrow text-center mt-8">
+            <v-icon size="13" class="mr-1">mdi-shield-check-outline</v-icon>
+            Encrypted &amp; stored locally
+          </p>
         </div>
       </v-col>
     </v-row>
-
-    <v-snackbar v-model="snackbar" color="error" :timeout="3000">
-      {{ snackbarText }}
-    </v-snackbar>
   </v-container>
 </template>
 
@@ -45,17 +56,22 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { setAuthenticated } from '../router'
+import { toast } from '../composables/useToast'
 
 const router = useRouter()
 const password = ref('')
+const show = ref(false)
 const loading = ref(false)
-const snackbar = ref(false)
-const snackbarText = ref('')
+const hasError = ref(false)
+
+function fail(msg) {
+  hasError.value = true
+  toast.error(msg)
+}
 
 async function handleLogin() {
   if (!password.value) {
-    snackbarText.value = 'Please enter the master password.'
-    snackbar.value = true
+    fail('Please enter the master password.')
     return
   }
 
@@ -66,12 +82,10 @@ async function handleLogin() {
       setAuthenticated(true)
       router.replace('/welcome')
     } else {
-      snackbarText.value = 'Incorrect password. Try again.'
-      snackbar.value = true
+      fail('Incorrect password. Try again.')
     }
   } catch {
-    snackbarText.value = 'An error occurred. Please try again.'
-    snackbar.value = true
+    fail('An error occurred. Please try again.')
   } finally {
     loading.value = false
   }
@@ -79,14 +93,41 @@ async function handleLogin() {
 </script>
 
 <style scoped>
-.background-image {
+.auth-card {
+  position: relative;
+  padding: 40px 36px 32px;
+  border-radius: 20px;
+  background: var(--vault-surface);
+  border: 1px solid var(--vault-hairline);
+  box-shadow: var(--vault-shadow);
+  overflow: hidden;
+}
+
+.auth-glow {
   position: absolute;
-  top: 16%;
+  top: -60px;
   left: 50%;
   transform: translateX(-50%);
-  width: 50vw;
-  height: 50vh;
-  background: url('../assets/logo.png') no-repeat center;
-  background-size: cover;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--vault-glow), transparent 70%);
+  pointer-events: none;
+}
+
+.auth-logo {
+  position: relative;
+  width: 64px;
+  height: auto;
+  filter: drop-shadow(0 8px 22px rgba(255, 203, 5, 0.28));
+}
+
+.auth-foot {
+  color: var(--vault-text-dim);
+  letter-spacing: 0.12em;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>

@@ -1,39 +1,26 @@
 <template>
-  <v-card class="entry-card" variant="outlined">
-    <v-card-text>
-      <p class="entry-field"><strong>Cardholder: </strong>{{ entry.cardholder }}</p>
-      <p class="entry-field"><strong>Card Number: </strong>{{ formattedCardNumber }}</p>
-      <p class="entry-field"><strong>Expiry: </strong>{{ entry.expiry_date }}</p>
-      <p v-show="showSensitive" class="entry-field sensitive">
-        <strong>CVV: </strong>{{ entry.cvv }}
-      </p>
-    </v-card-text>
-    <v-card-actions>
-      <v-btn size="small" variant="text" color="primary" @click="copyValue(entry.cvv)">
-        <v-icon start>mdi-content-copy</v-icon>Copy CVV
-      </v-btn>
-      <v-spacer />
-      <v-btn size="small" variant="text" color="error" @click="confirmDelete = true">
-        <v-icon start>mdi-delete</v-icon>Delete
-      </v-btn>
-    </v-card-actions>
-
-    <v-dialog v-model="confirmDelete" max-width="350">
-      <v-card>
-        <v-card-title>Delete Entry?</v-card-title>
-        <v-card-text>This will permanently delete this card entry.</v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn variant="text" @click="confirmDelete = false">Cancel</v-btn>
-          <v-btn color="error" variant="flat" @click="handleDelete">Delete</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-  </v-card>
+  <EntryCard
+    icon="mdi-credit-card-outline"
+    kind="Card"
+    accent="#5aa9e6"
+    :title="entry.cardholder"
+    :rows="[
+      { label: 'Number', value: formattedCardNumber },
+      { label: 'Expiry', value: entry.expiry_date },
+      { label: 'CVV', value: entry.cvv, secret: true }
+    ]"
+    copy-label="Copy CVV"
+    :copy-value="entry.cvv"
+    delete-name="card entry"
+    :show-sensitive="showSensitive"
+    @delete="handleDelete"
+  />
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
+import EntryCard from './EntryCard.vue'
+import { toast } from '../composables/useToast'
 
 const props = defineProps({
   entry: { type: Object, required: true },
@@ -41,38 +28,15 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['deleted'])
-const confirmDelete = ref(false)
 
 const formattedCardNumber = computed(() => {
   const num = props.entry.card_number.replace(/\s/g, '')
   return num.match(/.{1,4}/g)?.join(' ') || num
 })
 
-function copyValue(value) {
-  navigator.clipboard.writeText(value)
-  setTimeout(() => navigator.clipboard.writeText(' '), 30000)
-}
-
 async function handleDelete() {
-  confirmDelete.value = false
   await window.electronAPI.cards.delete(props.entry.id)
   emit('deleted')
+  toast.success('Card deleted')
 }
 </script>
-
-<style scoped>
-.entry-card {
-  width: 280px;
-  border-left: 5px solid rgb(var(--v-theme-primary));
-}
-
-.entry-field {
-  margin: 6px 0;
-  font-size: 14px;
-  font-family: 'Courier New', Courier, monospace;
-}
-
-.entry-field strong {
-  color: rgb(var(--v-theme-primary));
-}
-</style>

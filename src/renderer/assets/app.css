@@ -1,0 +1,265 @@
+/* ============================================================
+   The Vault — "Obsidian & Gold" design system
+   Offline-first: system font stacks only, no external CDNs.
+   ============================================================ */
+
+:root {
+  /* Type */
+  --vault-font-sans: "Segoe UI Variable Display", "Segoe UI", system-ui,
+    -apple-system, "Helvetica Neue", sans-serif;
+  --vault-font-mono: "Cascadia Mono", "Cascadia Code", "JetBrains Mono",
+    "Consolas", ui-monospace, "SF Mono", monospace;
+
+  /* Brand — pulled straight from the padlock logo */
+  --vault-gold: #ffcb05;
+  --vault-gold-deep: #f0a800;
+  --vault-steel: #8a8a82;
+
+  /* Elevation / shape */
+  --vault-radius: 14px;
+  --vault-radius-sm: 10px;
+}
+
+/* ---------- Dark (default) ---------- */
+.v-theme--dark {
+  --vault-bg: #0e0f12;
+  --vault-bg-2: #131519;
+  --vault-surface: #16181d;
+  --vault-surface-2: #1d2026;
+  --vault-text: #f3f1ea;
+  --vault-text-dim: #989ba2;
+  --vault-hairline: rgba(255, 255, 255, 0.08);
+  --vault-hairline-strong: rgba(255, 203, 5, 0.22);
+  --vault-glow: rgba(255, 203, 5, 0.16);
+  --vault-shadow: 0 18px 48px -24px rgba(0, 0, 0, 0.85);
+}
+
+/* ---------- Light ---------- */
+.v-theme--light {
+  --vault-bg: #f3efe4;
+  --vault-bg-2: #efe9da;
+  --vault-surface: #ffffff;
+  --vault-surface-2: #fbf7ee;
+  --vault-text: #1a1b1e;
+  --vault-text-dim: #6b6e73;
+  --vault-hairline: rgba(26, 27, 30, 0.1);
+  --vault-hairline-strong: rgba(176, 130, 0, 0.32);
+  --vault-glow: rgba(255, 203, 5, 0.22);
+  --vault-shadow: 0 16px 40px -22px rgba(60, 50, 10, 0.4);
+}
+
+/* ---------- Base ---------- */
+html,
+body,
+#app {
+  height: 100%;
+}
+
+* {
+  font-family: var(--vault-font-sans);
+}
+
+.v-application {
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: 0.01em;
+}
+
+/* Keep page content above the fixed atmospheric overlays */
+.v-application .v-main,
+.v-application .v-container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Atmospheric background: faint gold bloom + steel vignette over obsidian */
+.vault-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 50% -10%, var(--vault-glow), transparent 55%),
+    radial-gradient(80% 60% at 100% 110%, rgba(138, 138, 130, 0.08), transparent 60%);
+}
+
+/* Fine grain overlay for texture/depth */
+.vault-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- Typography helpers ---------- */
+.vault-wordmark {
+  font-weight: 800;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+}
+
+.vault-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--vault-text-dim);
+}
+
+.vault-mono {
+  font-family: var(--vault-font-mono);
+  font-feature-settings: "ss01";
+}
+
+/* ---------- Shared entry card surface ---------- */
+.entry-card {
+  position: relative;
+  width: 100%;
+  border-radius: var(--vault-radius) !important;
+  background: var(--vault-surface) !important;
+  border: 1px solid var(--vault-hairline) !important;
+  overflow: hidden;
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.entry-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--accent, var(--vault-gold));
+  opacity: 0.9;
+}
+
+.entry-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--vault-hairline-strong) !important;
+  box-shadow: var(--vault-shadow);
+}
+
+.entry-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px 4px;
+}
+
+.entry-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  flex: none;
+  color: var(--accent, var(--vault-gold));
+  background: color-mix(in srgb, var(--accent, var(--vault-gold)) 16%, transparent);
+}
+
+.entry-title {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--vault-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entry-kind {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--vault-text-dim);
+}
+
+.entry-body {
+  padding: 8px 18px 4px;
+}
+
+.entry-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px dashed var(--vault-hairline);
+}
+
+.entry-row:last-child {
+  border-bottom: none;
+}
+
+.entry-label {
+  flex: none;
+  min-width: 78px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--vault-text-dim);
+}
+
+.entry-value {
+  font-size: 0.9rem;
+  color: var(--vault-text);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.entry-value.is-secret {
+  font-family: var(--vault-font-mono);
+  letter-spacing: 0.02em;
+}
+
+.entry-secret-dots {
+  letter-spacing: 0.18em;
+  color: var(--vault-text-dim);
+}
+
+/* ---------- Custom scrollbar ---------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--vault-steel);
+  opacity: 0.4;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.v-theme--dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  background-clip: content-box;
+}
+
+/* ---------- Motion ---------- */
+@keyframes vault-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.vault-rise {
+  animation: vault-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

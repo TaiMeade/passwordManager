@@ -59,10 +59,21 @@ defineEmits(['refresh'])
 
 <style scoped>
 .entry-list {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 340px));
   gap: 20px;
   width: 100%;
-  justify-content: flex-start;
+  align-items: start;
+  justify-content: start;
 }
+
+/* Gentle staggered reveal for the first rows of cards */
+.entry-list > :nth-child(1) { animation-delay: 0.02s; }
+.entry-list > :nth-child(2) { animation-delay: 0.06s; }
+.entry-list > :nth-child(3) { animation-delay: 0.1s; }
+.entry-list > :nth-child(4) { animation-delay: 0.14s; }
+.entry-list > :nth-child(5) { animation-delay: 0.18s; }
+.entry-list > :nth-child(6) { animation-delay: 0.22s; }
+.entry-list > :nth-child(7) { animation-delay: 0.26s; }
+.entry-list > :nth-child(8) { animation-delay: 0.3s; }
 </style>
