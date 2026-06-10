@@ -50,6 +50,7 @@
           :notes="displayedNotes"
           :show-sensitive="showSensitive"
           @refresh="refreshAll"
+          @edit="editTarget = $event"
         />
       </v-container>
     </v-main>
@@ -57,6 +58,17 @@
     <!-- Add dialog -->
     <v-dialog v-model="addDialog" max-width="500" scrollable>
       <EntryForm @saved="onSaved" @close="addDialog = false" />
+    </v-dialog>
+
+    <!-- Edit dialog -->
+    <v-dialog v-model="editDialog" max-width="500" scrollable>
+      <EntryForm
+        v-if="editTarget"
+        :entry="editTarget.entry"
+        :type="editTarget.type"
+        @saved="onEdited"
+        @close="editTarget = null"
+      />
     </v-dialog>
   </v-layout>
 </template>
@@ -72,6 +84,12 @@ const searchTerm = ref('')
 const showSensitive = ref(false)
 const entryCount = ref(0)
 const addDialog = ref(false)
+
+const editTarget = ref(null)
+const editDialog = computed({
+  get: () => !!editTarget.value,
+  set: (open) => { if (!open) editTarget.value = null }
+})
 
 const passwords = ref([])
 const cards = ref([])
@@ -135,12 +153,22 @@ async function refreshAll() {
   ids.value = i
   notes.value = n
   entryCount.value = count
+  // Keep an active search in sync after add/edit/delete
+  if (searchTerm.value) {
+    searchResults.value = await window.electronAPI.db.search(searchTerm.value)
+  }
 }
 
 function onSaved() {
   addDialog.value = false
   refreshAll()
   toast.success('Added to your vault')
+}
+
+function onEdited() {
+  editTarget.value = null
+  refreshAll()
+  toast.success('Changes saved')
 }
 
 async function handleSelfDestruct() {

@@ -17,30 +17,35 @@ contextBridge.exposeInMainWorld('electronAPI', {
   passwords: {
     add: (data) => ipcRenderer.invoke('db:add-password', data),
     getAll: () => ipcRenderer.invoke('db:get-all-passwords'),
+    update: (id, data) => ipcRenderer.invoke('db:update-password', id, data),
     delete: (id) => ipcRenderer.invoke('db:delete-password', id)
   },
 
   cards: {
     add: (data) => ipcRenderer.invoke('db:add-card', data),
     getAll: () => ipcRenderer.invoke('db:get-all-cards'),
+    update: (id, data) => ipcRenderer.invoke('db:update-card', id, data),
     delete: (id) => ipcRenderer.invoke('db:delete-card', id)
   },
 
   bankAccounts: {
     add: (data) => ipcRenderer.invoke('db:add-bank-account', data),
     getAll: () => ipcRenderer.invoke('db:get-all-bank-accounts'),
+    update: (id, data) => ipcRenderer.invoke('db:update-bank-account', id, data),
     delete: (id) => ipcRenderer.invoke('db:delete-bank-account', id)
   },
 
   ids: {
     add: (data) => ipcRenderer.invoke('db:add-id', data),
     getAll: () => ipcRenderer.invoke('db:get-all-ids'),
+    update: (id, data) => ipcRenderer.invoke('db:update-id', id, data),
     delete: (id) => ipcRenderer.invoke('db:delete-id', id)
   },
 
   notes: {
     add: (data) => ipcRenderer.invoke('db:add-note', data),
     getAll: () => ipcRenderer.invoke('db:get-all-notes'),
+    update: (id, data) => ipcRenderer.invoke('db:update-note', id, data),
     delete: (id) => ipcRenderer.invoke('db:delete-note', id)
   }
 })

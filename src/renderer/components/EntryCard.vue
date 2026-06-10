@@ -37,6 +37,13 @@
         {{ copied ? 'Copied' : copyLabel }}
       </v-btn>
       <v-spacer />
+      <v-tooltip text="Edit" location="top">
+        <template #activator="{ props }">
+          <v-btn v-bind="props" icon size="small" variant="text" @click="$emit('edit')">
+            <v-icon size="20">mdi-pencil-outline</v-icon>
+          </v-btn>
+        </template>
+      </v-tooltip>
       <v-tooltip text="Delete" location="top">
         <template #activator="{ props }">
           <v-btn v-bind="props" icon size="small" variant="text" color="error" @click="confirm = true">
@@ -77,7 +84,7 @@ const props = defineProps({
   showSensitive: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['delete'])
+const emit = defineEmits(['delete', 'edit'])
 
 const revealed = ref(false)
 const copied = ref(false)

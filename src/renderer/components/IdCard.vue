@@ -9,6 +9,7 @@
     :copy-value="entry.id_number"
     delete-name="ID entry"
     :show-sensitive="showSensitive"
+    @edit="$emit('edit')"
     @delete="handleDelete"
   />
 </template>
@@ -22,7 +23,7 @@ const props = defineProps({
   showSensitive: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['deleted'])
+const emit = defineEmits(['deleted', 'edit'])
 
 async function handleDelete() {
   await window.electronAPI.ids.delete(props.entry.id)

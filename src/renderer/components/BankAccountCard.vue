@@ -12,6 +12,7 @@
     :copy-value="entry.account"
     delete-name="bank account entry"
     :show-sensitive="showSensitive"
+    @edit="$emit('edit')"
     @delete="handleDelete"
   />
 </template>
@@ -25,7 +26,7 @@ const props = defineProps({
   showSensitive: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['deleted'])
+const emit = defineEmits(['deleted', 'edit'])
 
 async function handleDelete() {
   await window.electronAPI.bankAccounts.delete(props.entry.id)

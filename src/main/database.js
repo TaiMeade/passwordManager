@@ -74,6 +74,10 @@ function getAllPasswords() {
   return db.prepare('SELECT * FROM passwords').all()
 }
 
+function updatePassword(id, { service, email, username, password }) {
+  db.prepare('UPDATE passwords SET service = ?, email = ?, username = ?, password = ? WHERE id = ?').run(service, email, username, password, id)
+}
+
 function deletePassword(id) {
   db.prepare('DELETE FROM passwords WHERE id = ?').run(id)
 }
@@ -85,6 +89,10 @@ function addCard({ cardholder, card_number, expiry_date, cvv }) {
 
 function getAllCards() {
   return db.prepare('SELECT * FROM cards').all()
+}
+
+function updateCard(id, { cardholder, card_number, expiry_date, cvv }) {
+  db.prepare('UPDATE cards SET cardholder = ?, card_number = ?, expiry_date = ?, cvv = ? WHERE id = ?').run(cardholder, card_number, expiry_date, cvv, id)
 }
 
 function deleteCard(id) {
@@ -100,6 +108,10 @@ function getAllBankAccounts() {
   return db.prepare('SELECT * FROM bank_accounts').all()
 }
 
+function updateBankAccount(id, { bank, routing, account }) {
+  db.prepare('UPDATE bank_accounts SET bank = ?, routing = ?, account = ? WHERE id = ?').run(bank, routing, account, id)
+}
+
 function deleteBankAccount(id) {
   db.prepare('DELETE FROM bank_accounts WHERE id = ?').run(id)
 }
@@ -113,6 +125,10 @@ function getAllIds() {
   return db.prepare('SELECT * FROM ids').all()
 }
 
+function updateId(id, { id_type, id_number }) {
+  db.prepare('UPDATE ids SET id_type = ?, id_number = ? WHERE id = ?').run(id_type, id_number, id)
+}
+
 function deleteId(id) {
   db.prepare('DELETE FROM ids WHERE id = ?').run(id)
 }
@@ -124,6 +140,10 @@ function addNote({ title, content }) {
 
 function getAllNotes() {
   return db.prepare('SELECT * FROM notes').all()
+}
+
+function updateNote(id, { title, content }) {
+  db.prepare('UPDATE notes SET title = ?, content = ? WHERE id = ?').run(title, content, id)
 }
 
 function deleteNote(id) {
@@ -183,11 +203,11 @@ module.exports = {
   init,
   getSetting,
   setSetting,
-  addPassword, getAllPasswords, deletePassword,
-  addCard, getAllCards, deleteCard,
-  addBankAccount, getAllBankAccounts, deleteBankAccount,
-  addId, getAllIds, deleteId,
-  addNote, getAllNotes, deleteNote,
+  addPassword, getAllPasswords, updatePassword, deletePassword,
+  addCard, getAllCards, updateCard, deleteCard,
+  addBankAccount, getAllBankAccounts, updateBankAccount, deleteBankAccount,
+  addId, getAllIds, updateId, deleteId,
+  addNote, getAllNotes, updateNote, deleteNote,
   search,
   selfDestruct,
   getEntryCount

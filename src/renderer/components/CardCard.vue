@@ -13,6 +13,7 @@
     :copy-value="entry.cvv"
     delete-name="card entry"
     :show-sensitive="showSensitive"
+    @edit="$emit('edit')"
     @delete="handleDelete"
   />
 </template>
@@ -27,7 +28,7 @@ const props = defineProps({
   showSensitive: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['deleted'])
+const emit = defineEmits(['deleted', 'edit'])
 
 const formattedCardNumber = computed(() => {
   const num = props.entry.card_number.replace(/\s/g, '')

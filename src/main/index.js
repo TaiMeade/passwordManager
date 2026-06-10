@@ -74,6 +74,12 @@ function registerIpcHandlers() {
     return rows.map(row => ({ ...row, password: decrypt(row.password) }))
   })
 
+  ipcMain.handle('db:update-password', (_, id, data) => {
+    data.password = encrypt(data.password)
+    db.updatePassword(id, data)
+    return true
+  })
+
   ipcMain.handle('db:delete-password', (_, id) => {
     db.deletePassword(id)
     return true
@@ -89,6 +95,12 @@ function registerIpcHandlers() {
   ipcMain.handle('db:get-all-cards', () => {
     const rows = db.getAllCards()
     return rows.map(row => ({ ...row, cvv: decrypt(row.cvv) }))
+  })
+
+  ipcMain.handle('db:update-card', (_, id, data) => {
+    data.cvv = encrypt(data.cvv)
+    db.updateCard(id, data)
+    return true
   })
 
   ipcMain.handle('db:delete-card', (_, id) => {
@@ -108,6 +120,12 @@ function registerIpcHandlers() {
     return rows.map(row => ({ ...row, account: decrypt(row.account) }))
   })
 
+  ipcMain.handle('db:update-bank-account', (_, id, data) => {
+    data.account = encrypt(data.account)
+    db.updateBankAccount(id, data)
+    return true
+  })
+
   ipcMain.handle('db:delete-bank-account', (_, id) => {
     db.deleteBankAccount(id)
     return true
@@ -125,6 +143,12 @@ function registerIpcHandlers() {
     return rows.map(row => ({ ...row, id_number: decrypt(row.id_number) }))
   })
 
+  ipcMain.handle('db:update-id', (_, id, data) => {
+    data.id_number = encrypt(data.id_number)
+    db.updateId(id, data)
+    return true
+  })
+
   ipcMain.handle('db:delete-id', (_, id) => {
     db.deleteId(id)
     return true
@@ -140,6 +164,12 @@ function registerIpcHandlers() {
   ipcMain.handle('db:get-all-notes', () => {
     const rows = db.getAllNotes()
     return rows.map(row => ({ ...row, content: decrypt(row.content) }))
+  })
+
+  ipcMain.handle('db:update-note', (_, id, data) => {
+    data.content = encrypt(data.content)
+    db.updateNote(id, data)
+    return true
   })
 
   ipcMain.handle('db:delete-note', (_, id) => {

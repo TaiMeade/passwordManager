@@ -1,17 +1,17 @@
 <template>
   <v-card class="add-card">
     <div class="add-head">
-      <div>
-        <p class="vault-eyebrow">New entry</p>
-        <h2 class="text-h6 font-weight-bold">Add to vault</h2>
+      <div style="min-width:0">
+        <p class="vault-eyebrow">{{ isEdit ? 'Edit entry' : 'New entry' }}</p>
+        <h2 class="text-h6 font-weight-bold text-truncate">{{ isEdit ? editTitle : 'Add to vault' }}</h2>
       </div>
       <v-btn icon variant="text" size="small" @click="$emit('close')">
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </div>
 
-    <!-- Type selector -->
-    <div class="type-bar">
+    <!-- Type selector (add) / frozen type chip (edit) -->
+    <div v-if="!isEdit" class="type-bar">
       <button
         v-for="t in entryTypes"
         :key="t.value"
@@ -23,6 +23,11 @@
         <v-icon size="20">{{ t.icon }}</v-icon>
         <span>{{ t.short }}</span>
       </button>
+    </div>
+    <div v-else class="edit-type">
+      <span class="edit-type-chip" :style="{ '--accent': activeType.accent }">
+        <v-icon size="15">{{ activeType.icon }}</v-icon>{{ activeType.kind }}
+      </span>
     </div>
 
     <v-card-text class="pt-2">
@@ -99,7 +104,8 @@
         <div class="d-flex ga-3 mt-2">
           <v-btn variant="text" class="flex-grow-1" @click="$emit('close')">Cancel</v-btn>
           <v-btn type="submit" color="primary" class="flex-grow-1 font-weight-bold" :loading="saving">
-            <v-icon start>mdi-content-save-outline</v-icon>Save
+            <v-icon start>{{ isEdit ? 'mdi-check' : 'mdi-content-save-outline' }}</v-icon>
+            {{ isEdit ? 'Save changes' : 'Save' }}
           </v-btn>
         </div>
       </v-form>
@@ -108,26 +114,40 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { vMaska } from 'maska/vue'
 import { toast } from '../composables/useToast'
+
+const props = defineProps({
+  // Entry to edit; null means add mode
+  entry: { type: Object, default: null },
+  type: { type: String, default: 'Password' }
+})
 
 const emit = defineEmits(['saved', 'close'])
 
 const entryTypes = [
-  { short: 'Password', value: 'Password', icon: 'mdi-key-variant' },
-  { short: 'Card', value: 'Card', icon: 'mdi-credit-card-outline' },
-  { short: 'Bank', value: 'Bank', icon: 'mdi-bank-outline' },
-  { short: 'ID', value: 'ID', icon: 'mdi-card-account-details-outline' },
-  { short: 'Note', value: 'Note', icon: 'mdi-note-text-outline' }
+  { short: 'Password', kind: 'Password', value: 'Password', icon: 'mdi-key-variant', accent: '#ffcb05' },
+  { short: 'Card', kind: 'Card', value: 'Card', icon: 'mdi-credit-card-outline', accent: '#5aa9e6' },
+  { short: 'Bank', kind: 'Bank account', value: 'Bank', icon: 'mdi-bank-outline', accent: '#3fb57e' },
+  { short: 'ID', kind: 'ID', value: 'ID', icon: 'mdi-card-account-details-outline', accent: '#b18cf0' },
+  { short: 'Note', kind: 'Secure note', value: 'Note', icon: 'mdi-note-text-outline', accent: '#f08a5a' }
 ]
 
-const entryType = ref('Password')
+const isEdit = computed(() => !!props.entry)
+const entryType = ref(props.entry ? props.type : 'Password')
 const formRef = ref(null)
 const showPassword = ref(false)
 const saving = ref(false)
 
-const form = ref(getEmptyForm('Password'))
+const form = ref(props.entry ? getFormFromEntry(props.type, props.entry) : getEmptyForm('Password'))
+
+const activeType = computed(() => entryTypes.find(t => t.value === entryType.value))
+
+// Frozen at open so the heading doesn't shift while the user types
+const editTitle = props.entry
+  ? props.entry.service || props.entry.cardholder || props.entry.bank || props.entry.id_type || props.entry.title || 'Update entry'
+  : ''
 
 const required = v => !!v || 'This field is required'
 const expiryRule = v =>
@@ -150,6 +170,23 @@ function getEmptyForm(type) {
   }
 }
 
+function getFormFromEntry(type, e) {
+  switch (type) {
+    case 'Password': return { service: e.service, email: e.email, username: e.username, password: e.password }
+    case 'Card': return {
+      cardholder: e.cardholder,
+      // Stored as raw digits — regroup for the masked field
+      card_number: e.card_number.replace(/\s/g, '').match(/.{1,4}/g)?.join(' ') || e.card_number,
+      expiry_date: e.expiry_date,
+      cvv: e.cvv
+    }
+    case 'Bank': return { bank: e.bank, routing: e.routing, account: e.account }
+    case 'ID': return { id_type: e.id_type, id_number: e.id_number }
+    case 'Note': return { title: e.title, content: e.content }
+    default: return {}
+  }
+}
+
 function generatePassword() {
   const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-='
   let result = ''
@@ -166,24 +203,30 @@ async function handleSubmit() {
   const { valid } = await formRef.value.validate()
   if (!valid) return
 
+  const api = {
+    Password: window.electronAPI.passwords,
+    Card: window.electronAPI.cards,
+    Bank: window.electronAPI.bankAccounts,
+    ID: window.electronAPI.ids,
+    Note: window.electronAPI.notes
+  }[entryType.value]
+
   saving.value = true
   try {
     const data = { ...form.value }
-    switch (entryType.value) {
-      case 'Password': await window.electronAPI.passwords.add(data); break
-      case 'Card':
-        data.card_number = data.card_number.replace(/\s/g, '')
-        await window.electronAPI.cards.add(data)
-        break
-      case 'Bank': await window.electronAPI.bankAccounts.add(data); break
-      case 'ID': await window.electronAPI.ids.add(data); break
-      case 'Note': await window.electronAPI.notes.add(data); break
+    if (entryType.value === 'Card') {
+      data.card_number = data.card_number.replace(/\s/g, '')
     }
-    form.value = getEmptyForm(entryType.value)
-    formRef.value?.resetValidation()
+    if (isEdit.value) {
+      await api.update(props.entry.id, data)
+    } else {
+      await api.add(data)
+      form.value = getEmptyForm(entryType.value)
+      formRef.value?.resetValidation()
+    }
     emit('saved')
   } catch {
-    toast.error('Could not save entry. Please try again.')
+    toast.error(isEdit.value ? 'Could not save changes. Please try again.' : 'Could not save entry. Please try again.')
   } finally {
     saving.value = false
   }
@@ -242,6 +285,25 @@ async function handleSubmit() {
 
 .type-pill.active .v-icon {
   color: rgb(var(--v-theme-primary));
+}
+
+.edit-type {
+  padding: 4px 20px 10px;
+}
+
+.edit-type-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 99px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent, var(--vault-gold));
+  background: color-mix(in srgb, var(--accent, var(--vault-gold)) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent, var(--vault-gold)) 35%, transparent);
 }
 
 .cursor-pointer {

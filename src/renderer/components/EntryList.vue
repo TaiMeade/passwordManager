@@ -5,6 +5,7 @@
       :key="'p-' + entry.id"
       :entry="entry"
       :show-sensitive="showSensitive"
+      @edit="$emit('edit', { type: 'Password', entry })"
       @deleted="$emit('refresh')"
     />
     <CardCard
@@ -12,6 +13,7 @@
       :key="'c-' + entry.id"
       :entry="entry"
       :show-sensitive="showSensitive"
+      @edit="$emit('edit', { type: 'Card', entry })"
       @deleted="$emit('refresh')"
     />
     <BankAccountCard
@@ -19,6 +21,7 @@
       :key="'b-' + entry.id"
       :entry="entry"
       :show-sensitive="showSensitive"
+      @edit="$emit('edit', { type: 'Bank', entry })"
       @deleted="$emit('refresh')"
     />
     <IdCard
@@ -26,6 +29,7 @@
       :key="'i-' + entry.id"
       :entry="entry"
       :show-sensitive="showSensitive"
+      @edit="$emit('edit', { type: 'ID', entry })"
       @deleted="$emit('refresh')"
     />
     <NoteCard
@@ -33,6 +37,7 @@
       :key="'n-' + entry.id"
       :entry="entry"
       :show-sensitive="showSensitive"
+      @edit="$emit('edit', { type: 'Note', entry })"
       @deleted="$emit('refresh')"
     />
   </div>
@@ -54,7 +59,7 @@ defineProps({
   showSensitive: { type: Boolean, default: false }
 })
 
-defineEmits(['refresh'])
+defineEmits(['refresh', 'edit'])
 </script>
 
 <style scoped>

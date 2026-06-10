@@ -44495,7 +44495,7 @@ const _hoisted_1$7 = { class: "auth-card vault-rise" };
 const _hoisted_2$6 = { class: "strength mt-4" };
 const _hoisted_3$4 = { class: "strength-track" };
 const _hoisted_4$4 = { class: "reqs mt-3" };
-const _hoisted_5$3 = { class: "auth-foot vault-eyebrow text-center mt-6" };
+const _hoisted_5$4 = { class: "auth-foot vault-eyebrow text-center mt-6" };
 const _sfc_main$e = {
   __name: "SetupView",
   setup(__props) {
@@ -44648,7 +44648,7 @@ const _sfc_main$e = {
                       ]),
                       _: 1
                     }, 512),
-                    createBaseVNode("p", _hoisted_5$3, [
+                    createBaseVNode("p", _hoisted_5$4, [
                       createVNode(VIcon, {
                         size: "13",
                         class: "mr-1"
@@ -44882,7 +44882,7 @@ const _hoisted_1$4 = { class: "settings-section" };
 const _hoisted_2$3 = { class: "stat-row" };
 const _hoisted_3$3 = { class: "stat-value" };
 const _hoisted_4$3 = { class: "settings-section" };
-const _hoisted_5$2 = { class: "settings-section" };
+const _hoisted_5$3 = { class: "settings-section" };
 const _sfc_main$a = {
   __name: "SettingsMenu",
   props: {
@@ -44986,7 +44986,7 @@ const _sfc_main$a = {
                   }, 8, ["model-value"])
                 ]),
                 createVNode(VDivider),
-                createBaseVNode("div", _hoisted_5$2, [
+                createBaseVNode("div", _hoisted_5$3, [
                   _cache[11] || (_cache[11] = createBaseVNode("p", {
                     class: "vault-eyebrow mb-2",
                     style: { "color": "rgb(var(--v-theme-error))" }
@@ -45352,26 +45352,45 @@ const l = /* @__PURE__ */ new WeakMap(), c = (e, s) => {
   l.has(a) ? (u = l.get(a)) == null || u.update(t) : l.set(a, new V(a, t));
 };
 const _hoisted_1$3 = { class: "add-head" };
-const _hoisted_2$2 = { class: "type-bar" };
-const _hoisted_3$2 = ["onClick"];
-const _hoisted_4$2 = { class: "d-flex ga-3 mt-2" };
+const _hoisted_2$2 = { style: { "min-width": "0" } };
+const _hoisted_3$2 = { class: "vault-eyebrow" };
+const _hoisted_4$2 = { class: "text-h6 font-weight-bold text-truncate" };
+const _hoisted_5$2 = {
+  key: 0,
+  class: "type-bar"
+};
+const _hoisted_6$2 = ["onClick"];
+const _hoisted_7$2 = {
+  key: 1,
+  class: "edit-type"
+};
+const _hoisted_8$1 = { class: "d-flex ga-3 mt-2" };
 const _sfc_main$8 = {
   __name: "EntryForm",
+  props: {
+    // Entry to edit; null means add mode
+    entry: { type: Object, default: null },
+    type: { type: String, default: "Password" }
+  },
   emits: ["saved", "close"],
   setup(__props, { emit: __emit }) {
+    const props = __props;
     const emit2 = __emit;
     const entryTypes = [
-      { short: "Password", value: "Password", icon: "mdi-key-variant" },
-      { short: "Card", value: "Card", icon: "mdi-credit-card-outline" },
-      { short: "Bank", value: "Bank", icon: "mdi-bank-outline" },
-      { short: "ID", value: "ID", icon: "mdi-card-account-details-outline" },
-      { short: "Note", value: "Note", icon: "mdi-note-text-outline" }
+      { short: "Password", kind: "Password", value: "Password", icon: "mdi-key-variant", accent: "#ffcb05" },
+      { short: "Card", kind: "Card", value: "Card", icon: "mdi-credit-card-outline", accent: "#5aa9e6" },
+      { short: "Bank", kind: "Bank account", value: "Bank", icon: "mdi-bank-outline", accent: "#3fb57e" },
+      { short: "ID", kind: "ID", value: "ID", icon: "mdi-card-account-details-outline", accent: "#b18cf0" },
+      { short: "Note", kind: "Secure note", value: "Note", icon: "mdi-note-text-outline", accent: "#f08a5a" }
     ];
-    const entryType = /* @__PURE__ */ ref("Password");
+    const isEdit = computed(() => !!props.entry);
+    const entryType = /* @__PURE__ */ ref(props.entry ? props.type : "Password");
     const formRef = /* @__PURE__ */ ref(null);
     const showPassword = /* @__PURE__ */ ref(false);
     const saving = /* @__PURE__ */ ref(false);
-    const form = /* @__PURE__ */ ref(getEmptyForm("Password"));
+    const form = /* @__PURE__ */ ref(props.entry ? getFormFromEntry(props.type, props.entry) : getEmptyForm("Password"));
+    const activeType = computed(() => entryTypes.find((t) => t.value === entryType.value));
+    const editTitle = props.entry ? props.entry.service || props.entry.cardholder || props.entry.bank || props.entry.id_type || props.entry.title || "Update entry" : "";
     const required = (v) => !!v || "This field is required";
     const expiryRule = (v) => !v || /^(0[1-9]|1[0-2])\/\d{2}$/.test(v) || "Use MM/YY";
     watch(entryType, (type) => {
@@ -45395,6 +45414,28 @@ const _sfc_main$8 = {
           return {};
       }
     }
+    function getFormFromEntry(type, e) {
+      switch (type) {
+        case "Password":
+          return { service: e.service, email: e.email, username: e.username, password: e.password };
+        case "Card":
+          return {
+            cardholder: e.cardholder,
+            // Stored as raw digits — regroup for the masked field
+            card_number: e.card_number.replace(/\s/g, "").match(/.{1,4}/g)?.join(" ") || e.card_number,
+            expiry_date: e.expiry_date,
+            cvv: e.cvv
+          };
+        case "Bank":
+          return { bank: e.bank, routing: e.routing, account: e.account };
+        case "ID":
+          return { id_type: e.id_type, id_number: e.id_number };
+        case "Note":
+          return { title: e.title, content: e.content };
+        default:
+          return {};
+      }
+    }
     function generatePassword() {
       const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
       let result = "";
@@ -45409,32 +45450,29 @@ const _sfc_main$8 = {
     async function handleSubmit() {
       const { valid } = await formRef.value.validate();
       if (!valid) return;
+      const api = {
+        Password: window.electronAPI.passwords,
+        Card: window.electronAPI.cards,
+        Bank: window.electronAPI.bankAccounts,
+        ID: window.electronAPI.ids,
+        Note: window.electronAPI.notes
+      }[entryType.value];
       saving.value = true;
       try {
         const data = { ...form.value };
-        switch (entryType.value) {
-          case "Password":
-            await window.electronAPI.passwords.add(data);
-            break;
-          case "Card":
-            data.card_number = data.card_number.replace(/\s/g, "");
-            await window.electronAPI.cards.add(data);
-            break;
-          case "Bank":
-            await window.electronAPI.bankAccounts.add(data);
-            break;
-          case "ID":
-            await window.electronAPI.ids.add(data);
-            break;
-          case "Note":
-            await window.electronAPI.notes.add(data);
-            break;
+        if (entryType.value === "Card") {
+          data.card_number = data.card_number.replace(/\s/g, "");
         }
-        form.value = getEmptyForm(entryType.value);
-        formRef.value?.resetValidation();
+        if (isEdit.value) {
+          await api.update(props.entry.id, data);
+        } else {
+          await api.add(data);
+          form.value = getEmptyForm(entryType.value);
+          formRef.value?.resetValidation();
+        }
         emit2("saved");
       } catch {
-        toast.error("Could not save entry. Please try again.");
+        toast.error(isEdit.value ? "Could not save changes. Please try again." : "Could not save entry. Please try again.");
       } finally {
         saving.value = false;
       }
@@ -45443,10 +45481,10 @@ const _sfc_main$8 = {
       return openBlock(), createBlock(VCard, { class: "add-card" }, {
         default: withCtx(() => [
           createBaseVNode("div", _hoisted_1$3, [
-            _cache[22] || (_cache[22] = createBaseVNode("div", null, [
-              createBaseVNode("p", { class: "vault-eyebrow" }, "New entry"),
-              createBaseVNode("h2", { class: "text-h6 font-weight-bold" }, "Add to vault")
-            ], -1)),
+            createBaseVNode("div", _hoisted_2$2, [
+              createBaseVNode("p", _hoisted_3$2, toDisplayString(isEdit.value ? "Edit entry" : "New entry"), 1),
+              createBaseVNode("h2", _hoisted_4$2, toDisplayString(isEdit.value ? unref(editTitle) : "Add to vault"), 1)
+            ]),
             createVNode(VBtn, {
               icon: "",
               variant: "text",
@@ -45464,7 +45502,7 @@ const _sfc_main$8 = {
               _: 1
             })
           ]),
-          createBaseVNode("div", _hoisted_2$2, [
+          !isEdit.value ? (openBlock(), createElementBlock("div", _hoisted_5$2, [
             (openBlock(), createElementBlock(Fragment, null, renderList(entryTypes, (t) => {
               return createBaseVNode("button", {
                 key: t.value,
@@ -45479,9 +45517,22 @@ const _sfc_main$8 = {
                   _: 2
                 }, 1024),
                 createBaseVNode("span", null, toDisplayString(t.short), 1)
-              ], 10, _hoisted_3$2);
+              ], 10, _hoisted_6$2);
             }), 64))
-          ]),
+          ])) : (openBlock(), createElementBlock("div", _hoisted_7$2, [
+            createBaseVNode("span", {
+              class: "edit-type-chip",
+              style: normalizeStyle({ "--accent": activeType.value.accent })
+            }, [
+              createVNode(VIcon, { size: "15" }, {
+                default: withCtx(() => [
+                  createTextVNode(toDisplayString(activeType.value.icon), 1)
+                ]),
+                _: 1
+              }),
+              createTextVNode(toDisplayString(activeType.value.kind), 1)
+            ], 4)
+          ])),
           createVNode(VCardText, { class: "pt-2" }, {
             default: withCtx(() => [
               createVNode(VForm, {
@@ -45546,13 +45597,13 @@ const _sfc_main$8 = {
                           text: "Generate strong password",
                           location: "top"
                         }, {
-                          activator: withCtx(({ props }) => [
-                            createVNode(VIcon, mergeProps(props, {
+                          activator: withCtx(({ props: props2 }) => [
+                            createVNode(VIcon, mergeProps(props2, {
                               color: "primary",
                               class: "cursor-pointer",
                               onClick: _cache[5] || (_cache[5] = ($event) => form.value.password = generatePassword())
                             }), {
-                              default: withCtx(() => [..._cache[23] || (_cache[23] = [
+                              default: withCtx(() => [..._cache[22] || (_cache[22] = [
                                 createTextVNode(" mdi-auto-fix ", -1)
                               ])]),
                               _: 1
@@ -45723,13 +45774,13 @@ const _sfc_main$8 = {
                       class: "mb-2"
                     }, null, 8, ["modelValue", "rules"])
                   ], 64)) : createCommentVNode("", true),
-                  createBaseVNode("div", _hoisted_4$2, [
+                  createBaseVNode("div", _hoisted_8$1, [
                     createVNode(VBtn, {
                       variant: "text",
                       class: "flex-grow-1",
                       onClick: _cache[20] || (_cache[20] = ($event) => _ctx.$emit("close"))
                     }, {
-                      default: withCtx(() => [..._cache[24] || (_cache[24] = [
+                      default: withCtx(() => [..._cache[23] || (_cache[23] = [
                         createTextVNode("Cancel", -1)
                       ])]),
                       _: 1
@@ -45742,12 +45793,12 @@ const _sfc_main$8 = {
                     }, {
                       default: withCtx(() => [
                         createVNode(VIcon, { start: "" }, {
-                          default: withCtx(() => [..._cache[25] || (_cache[25] = [
-                            createTextVNode("mdi-content-save-outline", -1)
-                          ])]),
+                          default: withCtx(() => [
+                            createTextVNode(toDisplayString(isEdit.value ? "mdi-check" : "mdi-content-save-outline"), 1)
+                          ]),
                           _: 1
                         }),
-                        _cache[26] || (_cache[26] = createTextVNode("Save ", -1))
+                        createTextVNode(" " + toDisplayString(isEdit.value ? "Save changes" : "Save"), 1)
                       ]),
                       _: 1
                     }, 8, ["loading"])
@@ -45764,7 +45815,7 @@ const _sfc_main$8 = {
     };
   }
 };
-const EntryForm = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["__scopeId", "data-v-186f718d"]]);
+const EntryForm = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["__scopeId", "data-v-ba3f4722"]]);
 const _hoisted_1$2 = { class: "entry-head" };
 const _hoisted_2$1 = { class: "entry-icon" };
 const _hoisted_3$1 = { style: { "min-width": "0", "flex": "1" } };
@@ -45790,7 +45841,7 @@ const _sfc_main$7 = {
     deleteName: { type: String, default: "entry" },
     showSensitive: { type: Boolean, default: false }
   },
-  emits: ["delete"],
+  emits: ["delete", "edit"],
   setup(__props, { emit: __emit }) {
     const props = __props;
     const emit2 = __emit;
@@ -45901,6 +45952,30 @@ const _sfc_main$7 = {
             }),
             createVNode(VSpacer),
             createVNode(VTooltip, {
+              text: "Edit",
+              location: "top"
+            }, {
+              activator: withCtx(({ props: props2 }) => [
+                createVNode(VBtn, mergeProps(props2, {
+                  icon: "",
+                  size: "small",
+                  variant: "text",
+                  onClick: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("edit"))
+                }), {
+                  default: withCtx(() => [
+                    createVNode(VIcon, { size: "20" }, {
+                      default: withCtx(() => [..._cache[5] || (_cache[5] = [
+                        createTextVNode("mdi-pencil-outline", -1)
+                      ])]),
+                      _: 1
+                    })
+                  ]),
+                  _: 1
+                }, 16)
+              ]),
+              _: 1
+            }),
+            createVNode(VTooltip, {
               text: "Delete",
               location: "top"
             }, {
@@ -45910,11 +45985,11 @@ const _sfc_main$7 = {
                   size: "small",
                   variant: "text",
                   color: "error",
-                  onClick: _cache[1] || (_cache[1] = ($event) => confirm.value = true)
+                  onClick: _cache[2] || (_cache[2] = ($event) => confirm.value = true)
                 }), {
                   default: withCtx(() => [
                     createVNode(VIcon, { size: "20" }, {
-                      default: withCtx(() => [..._cache[4] || (_cache[4] = [
+                      default: withCtx(() => [..._cache[6] || (_cache[6] = [
                         createTextVNode("mdi-trash-can-outline", -1)
                       ])]),
                       _: 1
@@ -45928,7 +46003,7 @@ const _sfc_main$7 = {
           ]),
           createVNode(VDialog, {
             modelValue: confirm.value,
-            "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => confirm.value = $event),
+            "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => confirm.value = $event),
             "max-width": "380"
           }, {
             default: withCtx(() => [
@@ -45937,12 +46012,12 @@ const _sfc_main$7 = {
                   createVNode(VCardTitle, { class: "d-flex align-center ga-2" }, {
                     default: withCtx(() => [
                       createVNode(VIcon, { color: "error" }, {
-                        default: withCtx(() => [..._cache[5] || (_cache[5] = [
+                        default: withCtx(() => [..._cache[7] || (_cache[7] = [
                           createTextVNode("mdi-trash-can-outline", -1)
                         ])]),
                         _: 1
                       }),
-                      _cache[6] || (_cache[6] = createTextVNode("Delete entry? ", -1))
+                      _cache[8] || (_cache[8] = createTextVNode("Delete entry? ", -1))
                     ]),
                     _: 1
                   }),
@@ -45957,9 +46032,9 @@ const _sfc_main$7 = {
                       createVNode(VSpacer),
                       createVNode(VBtn, {
                         variant: "text",
-                        onClick: _cache[2] || (_cache[2] = ($event) => confirm.value = false)
+                        onClick: _cache[3] || (_cache[3] = ($event) => confirm.value = false)
                       }, {
-                        default: withCtx(() => [..._cache[7] || (_cache[7] = [
+                        default: withCtx(() => [..._cache[9] || (_cache[9] = [
                           createTextVNode("Cancel", -1)
                         ])]),
                         _: 1
@@ -45969,7 +46044,7 @@ const _sfc_main$7 = {
                         variant: "flat",
                         onClick: onDelete
                       }, {
-                        default: withCtx(() => [..._cache[8] || (_cache[8] = [
+                        default: withCtx(() => [..._cache[10] || (_cache[10] = [
                           createTextVNode("Delete", -1)
                         ])]),
                         _: 1
@@ -45989,14 +46064,14 @@ const _sfc_main$7 = {
     };
   }
 };
-const EntryCard = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["__scopeId", "data-v-511e7b67"]]);
+const EntryCard = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["__scopeId", "data-v-1b72616b"]]);
 const _sfc_main$6 = {
   __name: "PasswordCard",
   props: {
     entry: { type: Object, required: true },
     showSensitive: { type: Boolean, default: false }
   },
-  emits: ["deleted"],
+  emits: ["deleted", "edit"],
   setup(__props, { emit: __emit }) {
     const props = __props;
     const emit2 = __emit;
@@ -46020,6 +46095,7 @@ const _sfc_main$6 = {
         "copy-value": __props.entry.password,
         "delete-name": "password entry",
         "show-sensitive": __props.showSensitive,
+        onEdit: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("edit")),
         onDelete: handleDelete
       }, null, 8, ["title", "rows", "copy-value", "show-sensitive"]);
     };
@@ -46031,7 +46107,7 @@ const _sfc_main$5 = {
     entry: { type: Object, required: true },
     showSensitive: { type: Boolean, default: false }
   },
-  emits: ["deleted"],
+  emits: ["deleted", "edit"],
   setup(__props, { emit: __emit }) {
     const props = __props;
     const emit2 = __emit;
@@ -46059,6 +46135,7 @@ const _sfc_main$5 = {
         "copy-value": __props.entry.cvv,
         "delete-name": "card entry",
         "show-sensitive": __props.showSensitive,
+        onEdit: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("edit")),
         onDelete: handleDelete
       }, null, 8, ["title", "rows", "copy-value", "show-sensitive"]);
     };
@@ -46070,7 +46147,7 @@ const _sfc_main$4 = {
     entry: { type: Object, required: true },
     showSensitive: { type: Boolean, default: false }
   },
-  emits: ["deleted"],
+  emits: ["deleted", "edit"],
   setup(__props, { emit: __emit }) {
     const props = __props;
     const emit2 = __emit;
@@ -46093,6 +46170,7 @@ const _sfc_main$4 = {
         "copy-value": __props.entry.account,
         "delete-name": "bank account entry",
         "show-sensitive": __props.showSensitive,
+        onEdit: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("edit")),
         onDelete: handleDelete
       }, null, 8, ["title", "rows", "copy-value", "show-sensitive"]);
     };
@@ -46104,7 +46182,7 @@ const _sfc_main$3 = {
     entry: { type: Object, required: true },
     showSensitive: { type: Boolean, default: false }
   },
-  emits: ["deleted"],
+  emits: ["deleted", "edit"],
   setup(__props, { emit: __emit }) {
     const props = __props;
     const emit2 = __emit;
@@ -46124,6 +46202,7 @@ const _sfc_main$3 = {
         "copy-value": __props.entry.id_number,
         "delete-name": "ID entry",
         "show-sensitive": __props.showSensitive,
+        onEdit: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("edit")),
         onDelete: handleDelete
       }, null, 8, ["title", "rows", "copy-value", "show-sensitive"]);
     };
@@ -46135,7 +46214,7 @@ const _sfc_main$2 = {
     entry: { type: Object, required: true },
     showSensitive: { type: Boolean, default: false }
   },
-  emits: ["deleted"],
+  emits: ["deleted", "edit"],
   setup(__props, { emit: __emit }) {
     const props = __props;
     const emit2 = __emit;
@@ -46155,6 +46234,7 @@ const _sfc_main$2 = {
         "copy-value": __props.entry.content,
         "delete-name": "note",
         "show-sensitive": __props.showSensitive,
+        onEdit: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("edit")),
         onDelete: handleDelete
       }, null, 8, ["title", "rows", "copy-value", "show-sensitive"]);
     };
@@ -46171,7 +46251,7 @@ const _sfc_main$1 = {
     notes: { type: Array, default: () => [] },
     showSensitive: { type: Boolean, default: false }
   },
-  emits: ["refresh"],
+  emits: ["refresh", "edit"],
   setup(__props) {
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$1, [
@@ -46180,46 +46260,51 @@ const _sfc_main$1 = {
             key: "p-" + entry.id,
             entry,
             "show-sensitive": __props.showSensitive,
+            onEdit: ($event) => _ctx.$emit("edit", { type: "Password", entry }),
             onDeleted: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("refresh"))
-          }, null, 8, ["entry", "show-sensitive"]);
+          }, null, 8, ["entry", "show-sensitive", "onEdit"]);
         }), 128)),
         (openBlock(true), createElementBlock(Fragment, null, renderList(__props.cards, (entry) => {
           return openBlock(), createBlock(_sfc_main$5, {
             key: "c-" + entry.id,
             entry,
             "show-sensitive": __props.showSensitive,
+            onEdit: ($event) => _ctx.$emit("edit", { type: "Card", entry }),
             onDeleted: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("refresh"))
-          }, null, 8, ["entry", "show-sensitive"]);
+          }, null, 8, ["entry", "show-sensitive", "onEdit"]);
         }), 128)),
         (openBlock(true), createElementBlock(Fragment, null, renderList(__props.bankAccounts, (entry) => {
           return openBlock(), createBlock(_sfc_main$4, {
             key: "b-" + entry.id,
             entry,
             "show-sensitive": __props.showSensitive,
+            onEdit: ($event) => _ctx.$emit("edit", { type: "Bank", entry }),
             onDeleted: _cache[2] || (_cache[2] = ($event) => _ctx.$emit("refresh"))
-          }, null, 8, ["entry", "show-sensitive"]);
+          }, null, 8, ["entry", "show-sensitive", "onEdit"]);
         }), 128)),
         (openBlock(true), createElementBlock(Fragment, null, renderList(__props.ids, (entry) => {
           return openBlock(), createBlock(_sfc_main$3, {
             key: "i-" + entry.id,
             entry,
             "show-sensitive": __props.showSensitive,
+            onEdit: ($event) => _ctx.$emit("edit", { type: "ID", entry }),
             onDeleted: _cache[3] || (_cache[3] = ($event) => _ctx.$emit("refresh"))
-          }, null, 8, ["entry", "show-sensitive"]);
+          }, null, 8, ["entry", "show-sensitive", "onEdit"]);
         }), 128)),
         (openBlock(true), createElementBlock(Fragment, null, renderList(__props.notes, (entry) => {
           return openBlock(), createBlock(_sfc_main$2, {
             key: "n-" + entry.id,
             entry,
             "show-sensitive": __props.showSensitive,
+            onEdit: ($event) => _ctx.$emit("edit", { type: "Note", entry }),
             onDeleted: _cache[4] || (_cache[4] = ($event) => _ctx.$emit("refresh"))
-          }, null, 8, ["entry", "show-sensitive"]);
+          }, null, 8, ["entry", "show-sensitive", "onEdit"]);
         }), 128))
       ]);
     };
   }
 };
-const EntryList = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["__scopeId", "data-v-593a6563"]]);
+const EntryList = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["__scopeId", "data-v-9fb7af1e"]]);
 const _hoisted_1 = { class: "vault-header vault-rise" };
 const _hoisted_2 = { class: "vault-eyebrow" };
 const _hoisted_3 = { class: "text-h5 font-weight-bold d-flex align-center ga-3" };
@@ -46240,6 +46325,13 @@ const _sfc_main = {
     const showSensitive = /* @__PURE__ */ ref(false);
     const entryCount = /* @__PURE__ */ ref(0);
     const addDialog = /* @__PURE__ */ ref(false);
+    const editTarget = /* @__PURE__ */ ref(null);
+    const editDialog = computed({
+      get: () => !!editTarget.value,
+      set: (open) => {
+        if (!open) editTarget.value = null;
+      }
+    });
     const passwords = /* @__PURE__ */ ref([]);
     const cards = /* @__PURE__ */ ref([]);
     const bankAccounts = /* @__PURE__ */ ref([]);
@@ -46292,11 +46384,19 @@ const _sfc_main = {
       ids.value = i;
       notes.value = n;
       entryCount.value = count;
+      if (searchTerm.value) {
+        searchResults.value = await window.electronAPI.db.search(searchTerm.value);
+      }
     }
     function onSaved() {
       addDialog.value = false;
       refreshAll();
       toast.success("Added to your vault");
+    }
+    function onEdited() {
+      editTarget.value = null;
+      refreshAll();
+      toast.success("Changes saved");
     }
     async function handleSelfDestruct() {
       await window.electronAPI.db.selfDestruct();
@@ -46338,12 +46438,12 @@ const _sfc_main = {
                     }, {
                       default: withCtx(() => [
                         createVNode(VIcon, { start: "" }, {
-                          default: withCtx(() => [..._cache[6] || (_cache[6] = [
+                          default: withCtx(() => [..._cache[9] || (_cache[9] = [
                             createTextVNode("mdi-plus", -1)
                           ])]),
                           _: 1
                         }),
-                        _cache[7] || (_cache[7] = createTextVNode("Add item ", -1))
+                        _cache[10] || (_cache[10] = createTextVNode("Add item ", -1))
                       ]),
                       _: 1
                     })
@@ -46353,13 +46453,13 @@ const _sfc_main = {
                       size: "64",
                       color: "primary"
                     }, {
-                      default: withCtx(() => [..._cache[8] || (_cache[8] = [
+                      default: withCtx(() => [..._cache[11] || (_cache[11] = [
                         createTextVNode("mdi-shield-plus-outline", -1)
                       ])]),
                       _: 1
                     }),
-                    _cache[11] || (_cache[11] = createBaseVNode("h2", { class: "text-h6 mt-4" }, "Your vault is empty", -1)),
-                    _cache[12] || (_cache[12] = createBaseVNode("p", { class: "text-medium-emphasis mb-5" }, "Add your first password, card, or secure note.", -1)),
+                    _cache[14] || (_cache[14] = createBaseVNode("h2", { class: "text-h6 mt-4" }, "Your vault is empty", -1)),
+                    _cache[15] || (_cache[15] = createBaseVNode("p", { class: "text-medium-emphasis mb-5" }, "Add your first password, card, or secure note.", -1)),
                     createVNode(VBtn, {
                       color: "primary",
                       size: "large",
@@ -46368,12 +46468,12 @@ const _sfc_main = {
                     }, {
                       default: withCtx(() => [
                         createVNode(VIcon, { start: "" }, {
-                          default: withCtx(() => [..._cache[9] || (_cache[9] = [
+                          default: withCtx(() => [..._cache[12] || (_cache[12] = [
                             createTextVNode("mdi-plus", -1)
                           ])]),
                           _: 1
                         }),
-                        _cache[10] || (_cache[10] = createTextVNode("Add your first item ", -1))
+                        _cache[13] || (_cache[13] = createTextVNode("Add your first item ", -1))
                       ]),
                       _: 1
                     })
@@ -46382,12 +46482,12 @@ const _sfc_main = {
                       size: "64",
                       color: "secondary"
                     }, {
-                      default: withCtx(() => [..._cache[13] || (_cache[13] = [
+                      default: withCtx(() => [..._cache[16] || (_cache[16] = [
                         createTextVNode("mdi-magnify-close", -1)
                       ])]),
                       _: 1
                     }),
-                    _cache[14] || (_cache[14] = createBaseVNode("h2", { class: "text-h6 mt-4" }, "No matches", -1)),
+                    _cache[17] || (_cache[17] = createBaseVNode("h2", { class: "text-h6 mt-4" }, "No matches", -1)),
                     createBaseVNode("p", _hoisted_7, "Nothing in your vault matches “" + toDisplayString(searchTerm.value) + "”.", 1)
                   ])) : (openBlock(), createBlock(EntryList, {
                     key: 2,
@@ -46397,7 +46497,8 @@ const _sfc_main = {
                     ids: displayedIds.value,
                     notes: displayedNotes.value,
                     "show-sensitive": showSensitive.value,
-                    onRefresh: refreshAll
+                    onRefresh: refreshAll,
+                    onEdit: _cache[4] || (_cache[4] = ($event) => editTarget.value = $event)
                   }, null, 8, ["passwords", "cards", "bank-accounts", "ids", "notes", "show-sensitive"]))
                 ]),
                 _: 1
@@ -46407,15 +46508,32 @@ const _sfc_main = {
           }),
           createVNode(VDialog, {
             modelValue: addDialog.value,
-            "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => addDialog.value = $event),
+            "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => addDialog.value = $event),
             "max-width": "500",
             scrollable: ""
           }, {
             default: withCtx(() => [
               createVNode(EntryForm, {
                 onSaved,
-                onClose: _cache[4] || (_cache[4] = ($event) => addDialog.value = false)
+                onClose: _cache[5] || (_cache[5] = ($event) => addDialog.value = false)
               })
+            ]),
+            _: 1
+          }, 8, ["modelValue"]),
+          createVNode(VDialog, {
+            modelValue: editDialog.value,
+            "onUpdate:modelValue": _cache[8] || (_cache[8] = ($event) => editDialog.value = $event),
+            "max-width": "500",
+            scrollable: ""
+          }, {
+            default: withCtx(() => [
+              editTarget.value ? (openBlock(), createBlock(EntryForm, {
+                key: 0,
+                entry: editTarget.value.entry,
+                type: editTarget.value.type,
+                onSaved: onEdited,
+                onClose: _cache[7] || (_cache[7] = ($event) => editTarget.value = null)
+              }, null, 8, ["entry", "type"])) : createCommentVNode("", true)
             ]),
             _: 1
           }, 8, ["modelValue"])
@@ -46425,7 +46543,7 @@ const _sfc_main = {
     };
   }
 };
-const VaultView = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-706066ad"]]);
+const VaultView = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-7a764d8e"]]);
 let isAuthenticated = false;
 function setAuthenticated(value) {
   isAuthenticated = value;

@@ -59782,23 +59782,23 @@ textarea.v-field__input::placeholder {
 }
 }
 
-.add-card[data-v-186f718d] {
+.add-card[data-v-ba3f4722] {
   background: var(--vault-surface);
   border: 1px solid var(--vault-hairline);
 }
-.add-head[data-v-186f718d] {
+.add-head[data-v-ba3f4722] {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   padding: 20px 20px 8px;
 }
-.type-bar[data-v-186f718d] {
+.type-bar[data-v-ba3f4722] {
   display: flex;
   gap: 6px;
   padding: 4px 20px 8px;
   flex-wrap: wrap;
 }
-.type-pill[data-v-186f718d] {
+.type-pill[data-v-ba3f4722] {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -59816,29 +59816,46 @@ textarea.v-field__input::placeholder {
   cursor: pointer;
   transition: all 0.18s ease;
 }
-.type-pill[data-v-186f718d]:hover {
+.type-pill[data-v-ba3f4722]:hover {
   border-color: var(--vault-hairline-strong);
   color: var(--vault-text);
 }
-.type-pill.active[data-v-186f718d] {
+.type-pill.active[data-v-ba3f4722] {
   color: var(--vault-text);
   border-color: transparent;
   background: color-mix(in srgb, rgb(var(--v-theme-primary)) 18%, transparent);
 }
-.type-pill.active .v-icon[data-v-186f718d] {
+.type-pill.active .v-icon[data-v-ba3f4722] {
   color: rgb(var(--v-theme-primary));
 }
-.cursor-pointer[data-v-186f718d] {
+.edit-type[data-v-ba3f4722] {
+  padding: 4px 20px 10px;
+}
+.edit-type-chip[data-v-ba3f4722] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 99px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent, var(--vault-gold));
+  background: color-mix(in srgb, var(--accent, var(--vault-gold)) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent, var(--vault-gold)) 35%, transparent);
+}
+.cursor-pointer[data-v-ba3f4722] {
   cursor: pointer;
 }
 
-.entry-foot[data-v-511e7b67] {
+.entry-foot[data-v-1b72616b] {
   display: flex;
   align-items: center;
   padding: 6px 10px 8px;
 }
 
-.entry-list[data-v-593a6563] {
+.entry-list[data-v-9fb7af1e] {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(290px, 340px));
   gap: 20px;
@@ -59848,24 +59865,24 @@ textarea.v-field__input::placeholder {
 }
 
 /* Gentle staggered reveal for the first rows of cards */
-.entry-list[data-v-593a6563] > :nth-child(1) { animation-delay: 0.02s;
+.entry-list[data-v-9fb7af1e] > :nth-child(1) { animation-delay: 0.02s;
 }
-.entry-list[data-v-593a6563] > :nth-child(2) { animation-delay: 0.06s;
+.entry-list[data-v-9fb7af1e] > :nth-child(2) { animation-delay: 0.06s;
 }
-.entry-list[data-v-593a6563] > :nth-child(3) { animation-delay: 0.1s;
+.entry-list[data-v-9fb7af1e] > :nth-child(3) { animation-delay: 0.1s;
 }
-.entry-list[data-v-593a6563] > :nth-child(4) { animation-delay: 0.14s;
+.entry-list[data-v-9fb7af1e] > :nth-child(4) { animation-delay: 0.14s;
 }
-.entry-list[data-v-593a6563] > :nth-child(5) { animation-delay: 0.18s;
+.entry-list[data-v-9fb7af1e] > :nth-child(5) { animation-delay: 0.18s;
 }
-.entry-list[data-v-593a6563] > :nth-child(6) { animation-delay: 0.22s;
+.entry-list[data-v-9fb7af1e] > :nth-child(6) { animation-delay: 0.22s;
 }
-.entry-list[data-v-593a6563] > :nth-child(7) { animation-delay: 0.26s;
+.entry-list[data-v-9fb7af1e] > :nth-child(7) { animation-delay: 0.26s;
 }
-.entry-list[data-v-593a6563] > :nth-child(8) { animation-delay: 0.3s;
+.entry-list[data-v-9fb7af1e] > :nth-child(8) { animation-delay: 0.3s;
 }
 
-.vault-header[data-v-706066ad] {
+.vault-header[data-v-7a764d8e] {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -59873,7 +59890,7 @@ textarea.v-field__input::placeholder {
   flex-wrap: wrap;
   margin-bottom: 28px;
 }
-.count-chip[data-v-706066ad] {
+.count-chip[data-v-7a764d8e] {
   display: inline-grid;
   place-items: center;
   min-width: 30px;
@@ -59885,7 +59902,7 @@ textarea.v-field__input::placeholder {
   color: rgb(var(--v-theme-primary));
   background: color-mix(in srgb, rgb(var(--v-theme-primary)) 16%, transparent);
 }
-.empty-state[data-v-706066ad] {
+.empty-state[data-v-7a764d8e] {
   display: flex;
   flex-direction: column;
   align-items: center;
