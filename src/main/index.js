@@ -1,4 +1,5 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog } = require('electron')
+const fs = require('fs')
 const path = require('path')
 const db = require('./database')
 const { encrypt, decrypt } = require('./encryption')
@@ -197,6 +198,38 @@ function registerIpcHandlers() {
   ipcMain.handle('db:self-destruct', () => {
     db.selfDestruct()
     return true
+  })
+
+  // --- Export for The Vault Cloud ---
+  // Writes every entry, decrypted, to a JSON file the cloud vault's Import
+  // reads. The file is NOT encrypted: it exists only to move entries across
+  // and should be deleted straight after importing. Needs the master password.
+  ipcMain.handle('db:export-for-cloud', async (_, enteredPassword) => {
+    const stored = db.getSetting('masterPassword')
+    if (!stored || decrypt(stored) !== enteredPassword) return { ok: false, reason: 'wrong-password' }
+
+    const stamp = new Date().toISOString().slice(0, 10)
+    const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+      title: 'Save export for The Vault Cloud',
+      defaultPath: path.join(app.getPath('downloads'), `vault-export-${stamp}.json`),
+      filters: [{ name: 'JSON', extensions: ['json'] }]
+    })
+    if (canceled || !filePath) return { ok: false, reason: 'canceled' }
+
+    const strip = (rows) => rows.map(({ id, ...rest }) => rest)
+    const data = {
+      format: 'the-vault-export',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      passwords: strip(db.getAllPasswords().map(r => ({ ...r, password: decrypt(r.password) }))),
+      cards: strip(db.getAllCards().map(r => ({ ...r, cvv: decrypt(r.cvv) }))),
+      bank_accounts: strip(db.getAllBankAccounts().map(r => ({ ...r, account: decrypt(r.account) }))),
+      ids: strip(db.getAllIds().map(r => ({ ...r, id_number: decrypt(r.id_number) }))),
+      notes: strip(db.getAllNotes().map(r => ({ ...r, content: decrypt(r.content) })))
+    }
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), { encoding: 'utf8', mode: 0o600 })
+    const count = data.passwords.length + data.cards.length + data.bank_accounts.length + data.ids.length + data.notes.length
+    return { ok: true, filePath, count }
   })
 
   // --- Entry Count ---

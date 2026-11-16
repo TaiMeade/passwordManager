@@ -50,6 +50,15 @@
       <v-divider />
 
       <div class="settings-section">
+        <p class="vault-eyebrow mb-2">Move to The Vault Cloud</p>
+        <v-btn variant="tonal" block @click="openExport">
+          <v-icon start>mdi-file-export-outline</v-icon>Export for The Vault Cloud
+        </v-btn>
+      </div>
+
+      <v-divider />
+
+      <div class="settings-section">
         <p class="vault-eyebrow mb-2" style="color:rgb(var(--v-theme-error))">Danger zone</p>
         <v-btn color="error" variant="tonal" block @click="confirmDialog = true">
           <v-icon start>mdi-delete-alert-outline</v-icon>Self-destruct
@@ -57,6 +66,36 @@
       </div>
     </v-card>
   </v-menu>
+
+  <v-dialog v-model="exportDialog" max-width="460">
+    <v-card class="pa-2">
+      <v-card-title class="d-flex align-center ga-2">
+        <v-icon>mdi-file-export-outline</v-icon>Export for The Vault Cloud
+      </v-card-title>
+      <v-card-text>
+        <p class="mb-3">
+          This saves every entry to a file that The Vault Cloud can import.
+          <strong>The file is not encrypted.</strong> Import it straight away, then delete it
+          and empty the Recycle Bin.
+        </p>
+        <v-text-field
+          v-model="exportPassword"
+          label="Master password"
+          type="password"
+          autocomplete="current-password"
+          :error-messages="exportError"
+          @keyup.enter="runExport"
+        />
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn variant="text" @click="exportDialog = false">Cancel</v-btn>
+        <v-btn color="primary" variant="flat" :loading="exporting" :disabled="!exportPassword" @click="runExport">
+          Choose where to save
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 
   <v-dialog v-model="confirmDialog" max-width="420">
     <v-card class="pa-2">
@@ -81,6 +120,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useTheme } from 'vuetify'
+import { toast } from '../composables/useToast'
 
 defineProps({
   showSensitive: { type: Boolean, default: false },
@@ -93,6 +133,37 @@ const theme = useTheme()
 const confirmDialog = ref(false)
 
 const isLight = computed(() => theme.global.name.value === 'light')
+
+const exportDialog = ref(false)
+const exportPassword = ref('')
+const exportError = ref('')
+const exporting = ref(false)
+
+function openExport() {
+  exportPassword.value = ''
+  exportError.value = ''
+  exportDialog.value = true
+}
+
+async function runExport() {
+  if (!exportPassword.value || exporting.value) return
+  exporting.value = true
+  exportError.value = ''
+  try {
+    const result = await window.electronAPI.db.exportForCloud(exportPassword.value)
+    if (result.ok) {
+      exportDialog.value = false
+      toast.warning(`Exported ${result.count} entries to ${result.filePath}. Delete it after importing.`, { timeout: 10000 })
+    } else if (result.reason === 'wrong-password') {
+      exportError.value = 'That isn’t your master password.'
+    }
+  } catch {
+    exportError.value = 'The export couldn’t be written.'
+  } finally {
+    exportPassword.value = ''
+    exporting.value = false
+  }
+}
 
 function toggleTheme() {
   theme.global.name.value = theme.global.name.value === 'dark' ? 'light' : 'dark'
