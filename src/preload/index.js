@@ -11,7 +11,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     search: (term) => ipcRenderer.invoke('db:search', term),
     selfDestruct: () => ipcRenderer.invoke('db:self-destruct'),
-    getEntryCount: () => ipcRenderer.invoke('db:get-entry-count')
+    getEntryCount: () => ipcRenderer.invoke('db:get-entry-count'),
+    exportForCloud: (password) => ipcRenderer.invoke('db:export-for-cloud', password)
   },
 
   passwords: {
